@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Ciudadano | La Rioja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="center-page">
+
+    <!-- Formulario de Login Principal -->
+    <div id="login-container" class="auth-container">
+        <div class="auth-card card">
+            <div class="brand-header">
+                <div class="logo-box">
+                    <div class="logo-triangle"></div>
+                    <h1>Gobierno de <span>La Rioja</span></h1>
+                </div>
+            </div>
+
+            <div class="login-form-box">
+                <div class="input-group">
+                    <label>Nombre o Email</label>
+                    <input type="text" id="email" placeholder="usuario@larioja.com">
+                </div>
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="pass" placeholder="••••••••">
+                </div>
+                
+                <div class="input-group">
+                    <label>Tipo de Cuenta</label>
+                    <select id="rol">
+                        <option value="ciudadano">Ciudadano / Vecino</option>
+                        <option value="funcionario">Funcionario Municipal</option>
+                    </select>
+                </div>
+
+                <!-- Botón que "Dirige al Mapa" -->
+                <div id="home-setup-section" class="input-group">
+                    <label>Residencia</label>
+                    <button onclick="app.openHomeSelector()" class="btn-map-selector">
+                        <i class="fa-solid fa-map-location-dot"></i> <span>Localizar mi casa en el mapa</span>
+                    </button>
+                    <p id="home-status-msg" style="display:none; color:var(--success); font-weight:800; font-size:0.8rem; margin-top:5px; text-align:center;">
+                        <i class="fa-solid fa-check-circle"></i> Ubicación vinculada
+                    </p>
+                </div>
+
+                <div id="pin-container" style="display: none;" class="input-group">
+                    <label>PIN Oficial</label>
+                    <input type="password" id="pin" placeholder="••••">
+                </div>
+
+                <button onclick="app.login()" class="btn-primary">Entrar</button>
+                <button onclick="app.register()" class="btn-secondary">Registrarse</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANTALLA COMPLETA DE MAPA (Selección de Casa) -->
+    <div id="full-map-selector" class="reg-map-overlay" style="display:none;">
+        <div class="map-selector-header">
+            <button onclick="app.closeHomeSelector()" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </button>
+            <div class="map-instruction">
+                <h3>Ubicación de Residencia</h3>
+                <p>Toca tu casa en el mapa de La Rioja</p>
+            </div>
+        </div>
+        <div id="reg-map"></div>
+        <div class="map-selector-footer">
+            <button onclick="app.confirmHomeLocation()" class="btn-confirm-home">
+                Confirmar esta ubicación
+            </button>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('rol').addEventListener('change', (e) => {
+            const isOfficial = e.target.value === 'funcionario';
+            document.getElementById('pin-container').style.display = isOfficial ? 'block' : 'none';
+            document.getElementById('home-setup-section').style.display = isOfficial ? 'none' : 'block';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Ciudadano | Vecino</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="app-layout">
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- LOGO GOBIERNO DE LA RIOJA -->
+            <div class="sidebar-header">
+                <div class="gov-logo-box">
+                    <!-- Escudo / Triángulo institucional -->
+                    <div class="gov-logo-icon">
+                        <svg viewBox="0 0 60 60" width="42" height="42" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="60" height="60" rx="8" fill="#e6192b"/>
+                            <polygon points="10,50 30,10 50,50" fill="white"/>
+                        </svg>
+                    </div>
+                    <div class="gov-logo-text">
+                        <span class="gov-subtitle">GOBIERNO DE</span>
+                        <span class="gov-name">LA RIOJA</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <!-- Sección Principal -->
+                <button onclick="app.mostrar('mapa')" class="nav-btn active">
+                    <i class="fa-solid fa-map-location-dot"></i> Mapa Urbano
+                </button>
+                <button onclick="app.mostrar('reportes')" class="nav-btn">
+                    <i class="fa-solid fa-file-signature"></i> Mis Reportes
+                </button>
+
+                <!-- Divisor: Servicios del Gobierno -->
+                <div class="nav-divider">
+                    <span>Servicios del Gobierno</span>
+                </div>
+
+                <button onclick="app.mostrar('obras')" class="nav-btn nav-btn-gov">
+                    <i class="fa-solid fa-person-digging"></i> Obras Públicas
+                </button>
+                <button onclick="app.mostrar('transporte')" class="nav-btn nav-btn-gov">
+                    <i class="fa-solid fa-bus-simple"></i> Transporte
+                </button>
+                <button onclick="app.mostrar('servicios')" class="nav-btn nav-btn-gov">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Alertas de Servicios
+                </button>
+                <button onclick="app.mostrar('emergencias')" class="nav-btn nav-btn-gov nav-btn-emergency">
+                    <i class="fa-solid fa-siren-on"></i> Emergencias y Alertas
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span id="user-name">Vecino</span>
+                    <small>La Rioja Capital</small>
+                </div>
+                <button onclick="app.logout()" class="btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+
+            <!-- MARCA PIE DE SIDEBAR -->
+            <div class="sidebar-brand-footer">
+                <svg viewBox="0 0 180 36" width="150" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Fondo rojo -->
+                    <rect width="180" height="36" rx="6" fill="#e6192b"/>
+                    <!-- Triángulos decorativos izquierda -->
+                    <polygon points="6,6 18,6 6,18" fill="white" opacity="0.5"/>
+                    <polygon points="6,20 18,20 6,32" fill="white" opacity="0.5"/>
+                    <polygon points="20,6 32,6 20,18" fill="white" opacity="0.3"/>
+                    <!-- Texto La Rioja -->
+                    <text x="90" y="15" font-family="Inter,Arial,sans-serif" font-weight="900" font-size="13" fill="white" text-anchor="middle" letter-spacing="1">LA RIOJA</text>
+                    <text x="90" y="28" font-family="Inter,Arial,sans-serif" font-weight="400" font-size="9" fill="white" text-anchor="middle" letter-spacing="2" opacity="0.85">Argentina</text>
+                    <!-- Triángulos decorativos derecha -->
+                    <polygon points="162,6 174,6 174,18" fill="white" opacity="0.5"/>
+                    <polygon points="162,20 174,20 174,32" fill="white" opacity="0.5"/>
+                    <polygon points="148,6 160,6 160,18" fill="white" opacity="0.3"/>
+                </svg>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Vista Mapa -->
+            <div id="mapaView" class="view-container active">
+                <div class="view-header">
+                    <h1>Mapa de Participación</h1>
+                    <p>Toca un punto para reportar un problema</p>
+                </div>
+                <div id="map" class="map-box"></div>
+            </div>
+
+            <!-- Vista Reportes -->
+            <div id="reportesView" class="view-container">
+                <div class="view-header">
+                    <h1>🎙️ Reporte Inteligente</h1>
+                    <p>Reportá con voz, foto o texto — en segundos</p>
+                </div>
+                
+                <div class="report-grid">
+                    <div class="card form-card">
+                        <form id="report-form">
+                            <!-- MÓDULO DE AUDIO -->
+                            <div class="audio-module">
+                                <div class="audio-module-header">
+                                    <i class="fa-solid fa-microphone"></i>
+                                    <span>Grabá tu reporte con voz</span>
+                                    <span class="audio-tip">Recomendado</span>
+                                </div>
+
+                                <!-- Indicador de grabación -->
+                                <div id="audio-record-status" class="audio-status idle">
+                                    <div class="audio-waveform">
+                                        <span></span><span></span><span></span><span></span><span></span>
+                                    </div>
+                                    <span id="audio-status-text">Listo para grabar</span>
+                                    <span id="audio-timer" class="audio-timer">0:00</span>
+                                </div>
+
+                                <!-- Botones de control -->
+                                <div class="audio-controls">
+                                    <button type="button" id="btn-grabar" class="btn-audio-rec" onclick="app.iniciarGrabacion()">
+                                        <i class="fa-solid fa-microphone"></i> Grabar
+                                    </button>
+                                    <button type="button" id="btn-detener" class="btn-audio-stop" onclick="app.detenerGrabacion()" disabled>
+                                        <i class="fa-solid fa-stop"></i> Detener
+                                    </button>
+                                    <button type="button" id="btn-borrar-audio" class="btn-audio-del" onclick="app.borrarAudio()" style="display:none;">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Player de previsualización -->
+                                <div id="audio-preview" style="display:none; margin-top:12px;">
+                                    <audio id="audio-player" controls style="width:100%; border-radius:8px;"></audio>
+                                    <p style="margin-top:6px; font-size:0.78rem; color:var(--gray-600); text-align:center;">
+                                        <i class="fa-solid fa-check-circle" style="color:var(--success);"></i> Audio listo para enviar
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- SEPARADOR -->
+                            <div class="form-divider"><span>y/o completá el formulario</span></div>
+
+                            <div class="input-group">
+                                <label>Categoría</label>
+                                <select id="cat" required>
+                                    <option value="Calles">Baches / Pavimento</option>
+                                    <option value="Alumbrado">Alumbrado Público</option>
+                                    <option value="Limpieza">Basura / Higiene</option>
+                                    <option value="Tránsito">Tránsito</option>
+                                    <option value="Seguridad">Seguridad</option>
+                                    <option value="Plazas/Parques">Plazas / Parques</option>
+                                    <option value="Agua/Cloacas">Agua / Cloacas</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label>Nivel de Urgencia</label>
+                                <select id="urgency" required>
+                                    <option value="Medio">🟡 Intermedio (Regular)</option>
+                                    <option value="Alto">🔴 Grave (Urgente)</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label>Descripción <span style="font-weight:400; color:var(--gray-600);">(opcional si grabaste audio)</span></label>
+                                <textarea id="desc" placeholder="Detallá lo que sucede..."></textarea>
+                            </div>
+
+                            <!-- FOTO con previsualización -->
+                            <div class="input-group">
+                                <label>📸 Fotografía del Problema</label>
+                                <div class="photo-upload-box" onclick="document.getElementById('photo').click()">
+                                    <img id="photo-preview-img" src="" alt="" style="display:none; width:100%; height:160px; object-fit:cover; border-radius:8px;">
+                                    <div id="photo-placeholder">
+                                        <i class="fa-solid fa-camera" style="font-size:2rem; color:var(--gray-600);"></i>
+                                        <p style="margin:8px 0 0; color:var(--gray-600); font-size:0.85rem;">Toca para tomar o adjuntar foto</p>
+                                    </div>
+                                </div>
+                                <input type="file" id="photo" accept="image/*" capture="environment" style="display:none;" onchange="app.previewPhoto(this)">
+                            </div>
+
+                            <!-- Ubicación requerida -->
+                            <div id="location-indicator" class="location-indicator no-location">
+                                <i class="fa-solid fa-map-pin"></i>
+                                <span id="location-text">Tocá el mapa para marcar la ubicación</span>
+                            </div>
+
+                            <button type="submit" class="btn-primary" style="margin-top:16px;">
+                                <i class="fa-solid fa-paper-plane"></i> Enviar Reporte
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card list-card">
+                        <h3>Mis envíos recientes</h3>
+                        <div id="lista" class="reports-list-mini"></div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Vista Obras Públicas -->
+            <div id="obrasView" class="view-container">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h1>Seguimiento de Obras Públicas</h1>
+                        <p>Transparencia y avance de los proyectos en la provincia</p>
+                    </div>
+                    <button onclick="app.descargarDatosObras()" class="btn-primary" style="width: auto; padding: 10px 20px; font-size: 0.9rem;">
+                        <i class="fa-solid fa-download"></i> Datos Abiertos
+                    </button>
+                </div>
+                
+                <div class="obras-toolbar card" style="margin-bottom: 20px; display: flex; gap: 15px; padding: 15px;">
+                    <div class="input-group" style="margin: 0; flex: 1;">
+                        <label>Tipo de Obra</label>
+                        <select id="filtro-tipo-obra" onchange="app.filtrarObras()">
+                            <option value="Todos">Todos los tipos</option>
+                            <option value="Vialidad">Vialidad</option>
+                            <option value="Infraestructura">Infraestructura</option>
+                            <option value="Salud">Salud</option>
+                            <option value="Educación">Educación</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="margin: 0; flex: 1;">
+                        <label>Estado</label>
+                        <select id="filtro-estado-obra" onchange="app.filtrarObras()">
+                            <option value="Todos">Todos los estados</option>
+                            <option value="Planificada">Planificada</option>
+                            <option value="En Ejecución">En Ejecución</option>
+                            <option value="Pausada">Pausada</option>
+                            <option value="Finalizada">Finalizada</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="obras-grid">
+                    <div class="card map-card" style="padding: 10px;">
+                        <div id="obras-map" class="map-box" style="height: 50vh;"></div>
+                    </div>
+                    <div class="card list-card" style="overflow-y: auto; max-height: 50vh;">
+                        <h3 style="margin-bottom: 15px;">Listado de Obras</h3>
+                        <div id="lista-obras" class="obras-list-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista Transporte Inteligente -->
+            <div id="transporteView" class="view-container">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h1>Transporte Inteligente</h1>
+                        <p>Movilidad urbana en tiempo real</p>
+                    </div>
+                </div>
+                
+                <div class="transporte-layout">
+                    <!-- Panel Izquierdo -->
+                    <div class="transporte-sidebar card">
+                        <div class="input-group">
+                            <label>¿A dónde vas?</label>
+                            <input type="text" placeholder="Buscar destino o parada..." id="transporte-buscar" oninput="app.buscarTransporte()">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label>Líneas de Colectivo</label>
+                            <select id="transporte-linea" onchange="app.cambiarLineaTransporte()">
+                                <option value="1">Línea Troncal Norte-Sur</option>
+                                <option value="2">Línea Troncal Este-Oeste</option>
+                            </select>
+                        </div>
+
+                        <div class="transporte-info-box">
+                            <h4>Estado del Servicio</h4>
+                            <p id="transporte-estado-txt" style="color:var(--success); font-weight:bold; font-size:0.9rem; margin-top:5px;"><i class="fa-solid fa-circle-check"></i> Servicio Normal (Frec. 12 min)</p>
+                        </div>
+                        
+                        <h4 style="margin-top:20px; color:var(--gray-600); font-size:0.85rem; text-transform:uppercase;">Paradas de la Línea</h4>
+                        <div id="transporte-paradas-lista" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+                            <!-- Dinámico -->
+                        </div>
+                    </div>
+
+                    <!-- Mapa Principal -->
+                    <div class="transporte-map-container card" style="padding:0; position:relative; overflow:hidden;">
+                        <div id="transporte-map" style="width:100%; height:100%; min-height:60vh;"></div>
+                        
+                        <!-- Tarjeta ETA Flotante (Oculta por defecto) -->
+                        <div id="transporte-eta-card" class="eta-floating-card">
+                            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+                                <div>
+                                    <h3 id="eta-parada-nombre" style="margin:0; font-size:1.1rem;">Parada Plaza Principal</h3>
+                                    <p id="eta-linea-nombre" style="margin:0; font-size:0.85rem; color:var(--gray-600);">Línea Troncal Norte-Sur</p>
+                                </div>
+                                <button onclick="app.cerrarEtaCard()" style="background:none; border:none; color:var(--gray-600); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <div style="background:var(--primary); color:white; width:60px; height:60px; border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                    <span id="eta-minutos" style="font-size:1.8rem; font-weight:800; line-height:1;">--</span>
+                                    <span style="font-size:0.6rem; text-transform:uppercase; font-weight:bold;">MIN</span>
+                                </div>
+                                <div>
+                                    <p style="margin:0; font-weight:bold;">Próximo Colectivo</p>
+                                    <p id="eta-distancia" style="margin:0; font-size:0.85rem; color:var(--gray-600);">Calculando...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista Alertas de Servicios Públicos -->
+            <div id="serviciosView" class="view-container">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h1>Servicios Públicos</h1>
+                        <p>Estado de suministro y alertas en tiempo real</p>
+                    </div>
+                    <button onclick="app.abrirModalReporteServicio()" class="btn-secondary" style="width:auto; padding:10px 20px; border-color:var(--danger); color:var(--danger);">
+                        <i class="fa-solid fa-bullhorn"></i> Reportar Falla
+                    </button>
+                </div>
+                
+                <!-- Resumen Superior -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:20px;">
+                    <div class="card status-ok" style="display:flex; align-items:center; gap:15px; padding:15px; border-left:4px solid var(--success);">
+                        <i class="fa-solid fa-bolt" style="font-size:2rem; color:var(--success);"></i>
+                        <div>
+                            <h3 style="margin:0; font-size:1rem;">Energía (Edelar)</h3>
+                            <p style="margin:0; font-size:0.85rem; color:var(--gray-600);">Servicio Normal</p>
+                        </div>
+                    </div>
+                    <div class="card status-danger" style="display:flex; align-items:center; gap:15px; padding:15px; border-left:4px solid var(--danger);">
+                        <i class="fa-solid fa-droplet" style="font-size:2rem; color:var(--danger);"></i>
+                        <div>
+                            <h3 style="margin:0; font-size:1rem;">Agua (Aguas Riojanas)</h3>
+                            <p style="margin:0; font-size:0.85rem; color:var(--danger); font-weight:bold;">Interrupciones Activas</p>
+                        </div>
+                    </div>
+                    <div class="card status-warning" style="display:flex; align-items:center; gap:15px; padding:15px; border-left:4px solid var(--warning);">
+                        <i class="fa-solid fa-fire-flame-simple" style="font-size:2rem; color:var(--warning);"></i>
+                        <div>
+                            <h3 style="margin:0; font-size:1rem;">Gas Natural</h3>
+                            <p style="margin:0; font-size:0.85rem; color:var(--warning); font-weight:bold;">Mantenimiento</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="servicios-layout" style="display:grid; grid-template-columns: 1fr 350px; gap:20px;">
+                    <!-- Mapa de Incidencias -->
+                    <div class="card map-box" style="padding:0; height: 50vh; overflow:hidden;" id="servicios-map"></div>
+                    
+                    <!-- Panel Lateral de Alertas -->
+                    <div class="card list-card" style="overflow-y: auto; height: 50vh; padding: 20px;">
+                        <h3 style="margin-bottom: 15px;">Alertas Activas</h3>
+                        <div id="servicios-lista-alertas" style="display:flex; flex-direction:column; gap:15px;">
+                            <!-- Dinámico -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== VISTA EMERGENCIAS Y ALERTAS OFICIALES ===== -->
+            <div id="emergenciasView" class="view-container">
+                <!-- Header con estado VIVO -->
+                <div class="emerg-header">
+                    <div>
+                        <h1><i class="fa-solid fa-siren-on" style="color:var(--danger);"></i> Emergencias y Alertas Oficiales</h1>
+                        <p>Información verificada en tiempo real por organismos competentes</p>
+                    </div>
+                    <div class="emerg-live-badge"><span class="live-dot"></span> EN VIVO</div>
+                </div>
+
+                <!-- Botones de Contacto Directo (SOS) -->
+                <div class="emerg-sos-grid">
+                    <button class="emerg-sos-btn red" onclick="app.callEmergency('Policía','101')">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Policía</span>
+                        <b>101</b>
+                    </button>
+                    <button class="emerg-sos-btn orange" onclick="app.callEmergency('Bomberos','100')">
+                        <i class="fa-solid fa-fire-flame-curved"></i>
+                        <span>Bomberos</span>
+                        <b>100</b>
+                    </button>
+                    <button class="emerg-sos-btn blue" onclick="app.callEmergency('Salud','107')">
+                        <i class="fa-solid fa-truck-medical"></i>
+                        <span>Salud</span>
+                        <b>107</b>
+                    </button>
+                    <button class="emerg-sos-btn purple" onclick="app.callEmergency('Defensa Civil','103')">
+                        <i class="fa-solid fa-people-roof"></i>
+                        <span>Defensa Civil</span>
+                        <b>103</b>
+                    </button>
+                </div>
+
+                <!-- Alerta Crítica (Banner) -->
+                <div id="emerg-banner" class="emerg-banner" style="display:none;">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="emerg-banner-text"></span>
+                </div>
+
+                <!-- Cuerpo: Mapa + Panel -->
+                <div class="emerg-body">
+                    <!-- Mapa de zonas afectadas -->
+                    <div class="card" style="padding:0; overflow:hidden; border-radius:14px; position:relative;">
+                        <div id="emergencias-map" style="height:50vh; width:100%;"></div>
+                        <!-- Leyenda del mapa -->
+                        <div class="emerg-map-legend">
+                            <div><span class="legend-dot" style="background:#d11124;"></span> Crítica</div>
+                            <div><span class="legend-dot" style="background:#f59e0b;"></span> Moderada</div>
+                            <div><span class="legend-dot" style="background:#3b82f6;"></span> Leve</div>
+                        </div>
+                    </div>
+
+                    <!-- Panel lateral: Alertas + Historial -->
+                    <div style="display:flex; flex-direction:column; gap:15px; overflow-y:auto; max-height:50vh;">
+                        <!-- Alertas activas -->
+                        <div class="card" style="padding:20px;">
+                            <h3 style="margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-bell" style="color:var(--danger);"></i> Alertas Activas
+                            </h3>
+                            <div id="emerg-lista-activas" style="display:flex; flex-direction:column; gap:10px;">
+                                <!-- Dinámico -->
+                            </div>
+                        </div>
+                        <!-- Historial -->
+                        <div class="card" style="padding:20px;">
+                            <h3 style="margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-clock-rotate-left" style="color:var(--gray-600);"></i> Historial Reciente
+                            </h3>
+                            <div id="emerg-historial" style="display:flex; flex-direction:column; gap:8px;">
+                                <!-- Dinámico -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SOS Button -->
+    <button id="sos-btn" class="sos-fab" onclick="app.toggleSOS()">
+        <i class="fa-solid fa-phone"></i>
+    </button>
+    <div id="sos-menu" class="sos-menu">
+        <button class="sos-option red" onclick="app.callSOS('Bomberos')">🚒 Bomberos</button>
+        <button class="sos-option blue" onclick="app.callSOS('Policía')">👮 Policía</button>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <!-- Modal Detalle de Obra -->
+    <div id="obraModal" class="obra-modal">
+        <div class="obra-modal-content card">
+            <button class="close-btn" onclick="app.cerrarDetalleObra()"><i class="fa-solid fa-xmark"></i></button>
+            <div id="obra-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Modal Reporte de Servicio -->
+    <div id="reporteServicioModal" class="obra-modal">
+        <div class="obra-modal-content card" style="max-width:500px;">
+            <button class="close-btn" onclick="app.cerrarModalReporteServicio()"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="margin-bottom: 20px; color: var(--danger);"><i class="fa-solid fa-bullhorn"></i> Reportar Falla de Servicio</h2>
+            <p style="margin-bottom:20px; font-size:0.9rem; color:var(--gray-600);">Ayúdanos a identificar cortes no registrados. Esta información será evaluada por los entes oficiales.</p>
+            <form id="form-reporte-servicio" onsubmit="app.guardarReporteServicio(event)">
+                <div class="input-group">
+                    <label>Tipo de Servicio Afectado</label>
+                    <select id="rs-tipo" required>
+                        <option value="Energía">Energía Eléctrica (Edelar)</option>
+                        <option value="Agua">Agua Potable (Aguas Riojanas)</option>
+                        <option value="Gas">Gas Natural</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Barrio / Zona</label>
+                    <input type="text" id="rs-zona" placeholder="Ej: B° Centro" required>
+                </div>
+                <div class="input-group">
+                    <label>Descripción del Problema</label>
+                    <textarea id="rs-desc" rows="3" placeholder="Ej: Sin luz desde hace 2 horas, explosión de transformador..." required></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="margin-top:20px; background:var(--danger);">Enviar Reporte Ciudadano</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Gestión | La Rioja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="app-layout admin-theme">
+
+    <div class="layout">
+        <!-- Sidebar Funcionario -->
+        <aside class="sidebar">
+            <!-- LOGO GOBIERNO DE LA RIOJA -->
+            <div class="sidebar-header">
+                <div class="gov-logo-box">
+                    <div class="gov-logo-icon">
+                        <svg viewBox="0 0 60 60" width="42" height="42" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="60" height="60" rx="8" fill="#e6192b"/>
+                            <polygon points="10,50 30,10 50,50" fill="white"/>
+                        </svg>
+                    </div>
+                    <div class="gov-logo-text">
+                        <span class="gov-subtitle">GOBIERNO DE</span>
+                        <span class="gov-name">LA RIOJA</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Badge de Rol -->
+            <div class="rol-badge">
+                <i class="fa-solid fa-id-badge"></i> Panel del Funcionario
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button onclick="app.mostrar('mapa')" class="nav-btn active">
+                    <i class="fa-solid fa-map-location-dot"></i> Mapa de Incidencias
+                </button>
+                <button onclick="app.mostrar('reportes')" class="nav-btn">
+                    <i class="fa-solid fa-clipboard-check"></i> Lista de Gestión
+                </button>
+                <button onclick="app.mostrar('stats')" class="nav-btn">
+                    <i class="fa-solid fa-chart-line"></i> Estadísticas
+                </button>
+                <button onclick="app.mostrar('adminObras')" class="nav-btn">
+                    <i class="fa-solid fa-person-digging"></i> Gestión de Obras
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span id="user-name">Funcionario</span>
+                    <small id="user-area">Área Municipal</small>
+                </div>
+                <button onclick="app.logout()" class="btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+
+            <!-- MARCA PIE DE SIDEBAR -->
+            <div class="sidebar-brand-footer">
+                <svg viewBox="0 0 180 36" width="150" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="180" height="36" rx="6" fill="#e6192b"/>
+                    <polygon points="6,6 18,6 6,18" fill="white" opacity="0.5"/>
+                    <polygon points="6,20 18,20 6,32" fill="white" opacity="0.5"/>
+                    <polygon points="20,6 32,6 20,18" fill="white" opacity="0.3"/>
+                    <text x="90" y="15" font-family="Inter,Arial,sans-serif" font-weight="900" font-size="13" fill="white" text-anchor="middle" letter-spacing="1">LA RIOJA</text>
+                    <text x="90" y="28" font-family="Inter,Arial,sans-serif" font-weight="400" font-size="9" fill="white" text-anchor="middle" letter-spacing="2" opacity="0.85">Argentina</text>
+                    <polygon points="162,6 174,6 174,18" fill="white" opacity="0.5"/>
+                    <polygon points="162,20 174,20 174,32" fill="white" opacity="0.5"/>
+                    <polygon points="148,6 160,6 160,18" fill="white" opacity="0.3"/>
+                </svg>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Vista Mapa (NUEVO PARA FUNCIONARIOS) -->
+            <div id="mapaView" class="view-container active">
+                <div class="view-header">
+                    <h1>Mapa Territorial</h1>
+                    <p>Monitoreo en tiempo real de los reportes ciudadanos</p>
+                </div>
+                <div id="map" class="map-box"></div>
+            </div>
+
+            <!-- Vista Gestión -->
+            <div id="reportesView" class="view-container">
+                <div class="view-header">
+                    <h1>Bandeja de Entrada</h1>
+                    <p>Procesa y resuelve los reportes pendientes</p>
+                </div>
+                <div id="lista" class="admin-reports-grid">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+
+            <!-- Vista Estadísticas -->
+            <div id="statsView" class="view-container">
+                <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h1>Métricas de Gestión</h1>
+                        <p>Satisfacción ciudadana y rendimiento territorial</p>
+                    </div>
+                </div>
+
+                <!-- 🙌 INDICADORES DE FEEDBACK (NUEVO) -->
+                <div class="admin-feedback-stats" style="margin-bottom: 20px;">
+                    <div class="stat-mini-card">
+                        <span id="feedback-avg-stars" style="font-size:1.4rem; font-weight:900; color:#f59e0b;">0.0 ⭐</span><br>
+                        <span style="font-size:0.7rem; color:var(--gray-600); text-transform:uppercase; font-weight:800;">Calificación Promedio</span>
+                    </div>
+                    <div class="stat-mini-card">
+                        <b id="feedback-total-thanks" style="font-size:1.6rem; color:#db2777;">0</b><br>
+                        <span style="font-size:0.7rem; color:var(--gray-600); text-transform:uppercase; font-weight:800;">Agradecimientos</span>
+                    </div>
+                    <div class="stat-mini-card">
+                        <b id="feedback-perc-pos" style="font-size:1.6rem; color:#059669;">0%</b><br>
+                        <span style="font-size:0.7rem; color:var(--gray-600); text-transform:uppercase; font-weight:800;">Resolución Positiva</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="card chart-card">
+                        <canvas id="grafico"></canvas>
+                    </div>
+                    <div class="card data-card">
+                        <h3>Resumen</h3>
+                        <div class="stat-item">
+                            <span>Pendientes</span>
+                            <strong id="stat-total">0</strong>
+                        </div>
+                        <button onclick="app.mostrarResoluciones()" class="btn-secondary" style="margin-top:20px; width:100%; padding:10px; border-radius:8px;">
+                            <i class="fa-solid fa-list-check"></i> Ver Resoluciones
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="resoluciones-modal" class="card" style="display:none; margin-top:20px;">
+                    <h3 style="color:var(--success); border-bottom:2px solid var(--success); padding-bottom:10px;"><i class="fa-solid fa-check-double"></i> Historial de Gestión y Resoluciones</h3>
+                    <div id="lista-resoluciones" style="max-height: 300px; overflow-y:auto; margin-top:15px; padding-right:10px;"></div>
+                </div>
+            </div>
+
+            <!-- Vista Gestión de Obras -->
+            <div id="adminObrasView" class="view-container">
+                <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h1>Obras Públicas</h1>
+                        <p>Administración y actualización de proyectos</p>
+                    </div>
+                    <button onclick="app.abrirModalNuevaObra()" class="btn-primary" style="width:auto; padding:10px 20px;">
+                        <i class="fa-solid fa-plus"></i> Nueva Obra
+                    </button>
+                </div>
+                <div id="admin-lista-obras" class="admin-reports-grid">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <!-- Modal Nueva Obra -->
+    <div id="adminNuevaObraModal" class="obra-modal">
+        <div class="obra-modal-content card">
+            <button class="close-btn" onclick="app.cerrarModalNuevaObra()"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="margin-bottom: 20px; color: var(--primary);">Registrar Nueva Obra</h2>
+            <form id="form-nueva-obra" onsubmit="app.guardarNuevaObra(event)">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div class="input-group">
+                        <label>Nombre de la Obra</label>
+                        <input type="text" id="n-obra-nombre" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Tipo</label>
+                        <select id="n-obra-tipo" required>
+                            <option value="Vialidad">Vialidad</option>
+                            <option value="Infraestructura">Infraestructura</option>
+                            <option value="Salud">Salud</option>
+                            <option value="Educación">Educación</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Organismo Responsable</label>
+                        <input type="text" id="n-obra-org" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Presupuesto</label>
+                        <input type="text" id="n-obra-presupuesto" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Financiamiento</label>
+                        <input type="text" id="n-obra-fin" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Estado Inicial</label>
+                        <select id="n-obra-estado" required>
+                            <option value="Planificada">Planificada</option>
+                            <option value="En Ejecución">En Ejecución</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Fecha de Inicio</label>
+                        <input type="date" id="n-obra-inicio" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Fecha de Fin Estimada</label>
+                        <input type="date" id="n-obra-fin-est" required>
+                    </div>
+                </div>
+                
+                <div class="input-group" style="margin-top: 15px;">
+                    <label>Ubicación Geográfica (Toque el mapa)</label>
+                    <div id="select-obra-map" class="map-box" style="height: 250px;"></div>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="margin-top:20px;">Guardar Obra</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Actualizar Obra -->
+    <div id="adminActualizarObraModal" class="obra-modal">
+        <div class="obra-modal-content card" style="max-width:500px;">
+            <button class="close-btn" onclick="app.cerrarModalActualizarObra()"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="margin-bottom: 20px; color: var(--primary);">Actualizar Obra</h2>
+            <form id="form-actualizar-obra" onsubmit="app.guardarActualizacionObra(event)">
+                <input type="hidden" id="a-obra-id">
+                <div class="input-group">
+                    <label>Cambiar Estado</label>
+                    <select id="a-obra-estado" required>
+                        <option value="Planificada">Planificada</option>
+                        <option value="En Ejecución">En Ejecución</option>
+                        <option value="Pausada">Pausada</option>
+                        <option value="Finalizada">Finalizada</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Porcentaje de Avance Físico (%)</label>
+                    <input type="number" id="a-obra-avance" min="0" max="100" required>
+                </div>
+                <div class="input-group">
+                    <label>Añadir Novedad / Actualización Oficial</label>
+                    <textarea id="a-obra-novedad" rows="3" placeholder="Ej: Se completó el techado del pabellón A..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="margin-top:20px;">Actualizar Obra</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
