@@ -1,0 +1,23 @@
+{
+  "name": "Ciudad Activa - La Rioja",
+  "short_name": "CiudadActiva",
+  "description": "Plataforma de reportes ciudadanos de La Rioja",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#e6192b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "ICONO.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+        "src": "ICONO.png",
+        "sizes": "192x192",
+        "type": "image/png"
+    }
+  ]
+}

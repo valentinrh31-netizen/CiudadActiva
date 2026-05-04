@@ -39,6 +39,17 @@ class CiudadActivaApp {
 
     init() {
         this.detectPageAndInit();
+        this.registerSW();
+    }
+
+    registerSW() {
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado', reg))
+                    .catch(err => console.error('Error al registrar SW', err));
+            });
+        }
     }
 
     detectPageAndInit() {
