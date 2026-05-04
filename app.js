@@ -167,6 +167,17 @@ class CiudadActivaApp {
         this.renderCitizenList();
         this.renderObrasList();
         this.checkNotifications();
+
+        // En móvil, abrir el sheet un poco para mostrar que existe
+        if (this.device === 'mobile') {
+            setTimeout(() => {
+                const sheet = document.getElementById('bottom-sheet');
+                if (sheet) {
+                    // El sheet ya está en posición cerrada mostrando el handle y tabs
+                    console.log("Modo móvil activo");
+                }
+            }, 1000);
+        }
     }
     initAdminPage() {
         if (!this.user) {
