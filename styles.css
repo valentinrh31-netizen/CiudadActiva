@@ -103,6 +103,141 @@ body::before {
     margin-bottom: 30px;
 }
 
+/* 💻 DEVICE SELECTOR STYLES */
+.device-selector {
+    display: flex;
+    gap: 15px;
+    margin-top: 5px;
+}
+
+.device-option {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+    background: var(--bg);
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid var(--gray-200);
+}
+
+.device-option i {
+    font-size: 1.8rem;
+    color: var(--gray-600);
+    transition: transform 0.3s ease;
+}
+
+.device-option span {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--gray-600);
+}
+
+.device-option:hover {
+    background: #fff;
+    border-color: var(--primary);
+    transform: translateY(-3px);
+}
+
+.device-option:hover i {
+    color: var(--primary);
+    transform: scale(1.1);
+}
+
+.device-option.active {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.device-option.active i, 
+.device-option.active span {
+    color: #3b82f6;
+}
+
+.device-option:active {
+    transform: scale(0.95);
+}
+
+/* 📱 ADAPTACIÓN VISUAL POR DISPOSITIVO */
+
+/* MODO CELULAR */
+body.mobile {
+    --radius: 20px;
+}
+
+/* En móvil ocultamos el sidebar lateral para priorizar el contenido, 
+   o podrías transformarlo en un menú inferior si fuera necesario */
+body.mobile .sidebar {
+    display: none;
+}
+
+body.mobile .main-content {
+    padding: 15px;
+}
+
+body.mobile .view-header h1 {
+    font-size: 1.6rem;
+}
+
+body.mobile .btn-primary,
+body.mobile .btn-secondary,
+body.mobile .nav-btn {
+    padding: 18px;
+    font-size: 1.1rem;
+}
+
+body.mobile input,
+body.mobile select,
+body.mobile textarea {
+    padding: 16px;
+    font-size: 1rem;
+}
+
+body.mobile .report-grid,
+body.mobile .obras-grid,
+body.mobile .stats-grid,
+body.mobile .servicios-layout,
+body.mobile .admin-reports-grid {
+    grid-template-columns: 1fr !important;
+}
+
+body.mobile .transporte-layout,
+body.mobile .emerg-body {
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+}
+
+body.mobile .transporte-sidebar {
+    width: 100% !important;
+    margin-bottom: 20px;
+}
+
+body.mobile .transporte-map-container,
+body.mobile .map-box {
+    height: 45vh !important;
+}
+
+/* MODO PC (DASHBOARD) */
+body.pc .sidebar {
+    display: flex;
+    width: 280px;
+}
+
+body.pc .main-content {
+    padding: 40px;
+}
+
+body.pc .stats-grid {
+    grid-template-columns: 2fr 1fr;
+}
+
+
 /* 📱 LAYOUT MULTI-PÁGINA */
 .app-layout {
     height: 100vh;

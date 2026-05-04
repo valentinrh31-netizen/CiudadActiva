@@ -9,6 +9,9 @@ class CiudadActivaApp {
         this.user = JSON.parse(localStorage.getItem('ca_user')) || null;
         this.obras = JSON.parse(localStorage.getItem('ca_obras')) || [];
         
+        this.device = localStorage.getItem('device') || 'pc';
+        document.body.classList.add(this.device);
+
         if (this.reports.length === 0) this.seedData();
         if (this.obras.length === 0) this.seedObras();
         
@@ -65,7 +68,28 @@ class CiudadActivaApp {
         }
     }
 
-    initLoginPage() { console.log("Login Ready"); }
+    initLoginPage() { 
+        console.log("Login Ready"); 
+        
+        // Auto-detección de dispositivo
+        const isMobile = /iPhone|Android|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+        this.setDevice(isMobile ? 'mobile' : 'pc');
+    }
+
+    setDevice(type) {
+        this.device = type;
+        const pcBtn = document.getElementById('device-pc');
+        const mobileBtn = document.getElementById('device-mobile');
+        
+        if (pcBtn && mobileBtn) {
+            pcBtn.classList.toggle('active', type === 'pc');
+            mobileBtn.classList.toggle('active', type === 'mobile');
+        }
+
+        // Aplicar clase al body para previsualización o efecto inmediato
+        document.body.classList.remove('pc', 'mobile');
+        document.body.classList.add(type);
+    }
     initCitizenPage() {
         document.getElementById('user-name').textContent = this.user.name;
         setTimeout(() => this.initMap(), 400);
@@ -148,6 +172,7 @@ class CiudadActivaApp {
         
         this.user = userData;
         localStorage.setItem('ca_user', JSON.stringify(this.user));
+        localStorage.setItem('device', this.device);
         window.location.href = (rol === 'funcionario') ? "admin.html" : "app.html";
     }
 
