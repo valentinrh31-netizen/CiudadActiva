@@ -474,14 +474,18 @@
 
     <!-- Bottom Sheet (Panel Deslizable) -->
     <div id="bottom-sheet" class="bottom-sheet">
-        <div class="sheet-handle" onclick="app.toggleSheet()"></div>
+        <div class="sheet-header" onclick="app.toggleSheet()">
+            <div class="sheet-handle"></div>
+            <div class="sheet-drag-label">Deslizar para ver más</div>
+        </div>
+        
+        <div class="sheet-tabs">
+            <button id="tab-reports" class="sheet-tab active" onclick="app.switchSheetTab('reports')">Reportes</button>
+            <button id="tab-create" class="sheet-tab" onclick="app.switchSheetTab('create')">Crear</button>
+            <button id="tab-activity" class="sheet-tab" onclick="app.switchSheetTab('activity')">Actividad</button>
+        </div>
+
         <div class="sheet-content">
-            <div class="sheet-tabs">
-                <button id="tab-reports" class="sheet-tab active" onclick="app.switchSheetTab('reports')">Reportes</button>
-                <button id="tab-create" class="sheet-tab" onclick="app.switchSheetTab('create')">Crear</button>
-                <button id="tab-activity" class="sheet-tab" onclick="app.switchSheetTab('activity')">Actividad</button>
-            </div>
-            
             <div id="sheet-view-reports" class="sheet-view active">
                 <div id="mobile-lista-reportes">
                     <!-- Los reportes se renderizan aquí en mobile -->
