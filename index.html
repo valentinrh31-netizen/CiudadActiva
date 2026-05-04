@@ -58,6 +58,20 @@
                     <input type="password" id="pin" placeholder="••••">
                 </div>
 
+                <div class="input-group">
+                    <label>Tipo de Dispositivo</label>
+                    <div class="device-selector">
+                        <button type="button" id="device-pc" class="device-option" onclick="app.setDevice('pc')">
+                            <i class="fa-solid fa-desktop"></i>
+                            <span>Computadora</span>
+                        </button>
+                        <button type="button" id="device-mobile" class="device-option" onclick="app.setDevice('mobile')">
+                            <i class="fa-solid fa-mobile-screen-button"></i>
+                            <span>Celular</span>
+                        </button>
+                    </div>
+                </div>
+
                 <button onclick="app.login()" class="btn-primary">Entrar</button>
                 <button onclick="app.register()" class="btn-secondary">Registrarse</button>
             </div>
