@@ -6,7 +6,7 @@ const ASSETS = [
   './admin.html',
   './styles.css',
   './app.js',
-  './ICONO.png',
+  './ICONOOO.png',
   './assets/la_rioja_bg.png'
 ];
 
