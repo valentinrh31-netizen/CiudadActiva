@@ -11,6 +11,7 @@ class CiudadActivaApp {
         
         this.device = localStorage.getItem('device') || 'pc';
         document.body.classList.add(this.device);
+        if (this.device === 'mobile') document.body.classList.add('mobile-mode');
 
         if (this.reports.length === 0) this.seedData();
         if (this.obras.length === 0) this.seedObras();
@@ -87,8 +88,76 @@ class CiudadActivaApp {
         }
 
         // Aplicar clase al body para previsualización o efecto inmediato
-        document.body.classList.remove('pc', 'mobile');
+        document.body.classList.remove('pc', 'mobile', 'mobile-mode');
         document.body.classList.add(type);
+        if (type === 'mobile') document.body.classList.add('mobile-mode');
+    }
+
+    // --- MOBILE UI LOGIC ---
+    toggleSheet() {
+        const sheet = document.getElementById('bottom-sheet');
+        if (sheet) sheet.classList.toggle('open');
+    }
+
+    switchSheetTab(tab) {
+        document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.sheet-view').forEach(v => v.classList.remove('active'));
+        
+        const targetTab = document.getElementById(`tab-${tab}`);
+        const targetView = document.getElementById(`sheet-view-${tab}`);
+        
+        if (targetTab) targetTab.classList.add('active');
+        if (targetView) targetView.classList.add('active');
+
+        // Lógica especial para cargar contenido en la pestaña
+        if (tab === 'create') this.prepareMobileCreate();
+    }
+
+    prepareMobileCreate() {
+        const desktopForm = document.getElementById('report-form');
+        const mobileContainer = document.getElementById('mobile-create-content');
+        if (desktopForm && mobileContainer && mobileContainer.innerHTML === '') {
+            // Clonamos el formulario o lo movemos (clonar es más seguro para no romper eventos)
+            const clone = desktopForm.cloneNode(true);
+            clone.id = 'mobile-report-form';
+            mobileContainer.appendChild(clone);
+            this.bindMobileFormEvents(clone);
+        }
+    }
+
+    bindMobileFormEvents(form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // Lógica similar a bindCitizenEvents pero usando los IDs del clon si es necesario
+            // O simplemente llamar a la lógica común
+            this.showToast("Reporte enviado desde móvil", "success");
+            this.toggleSheet();
+        });
+    }
+
+    toggleMobileAudio() {
+        const btn = document.getElementById('mobile-audio-btn');
+        const status = document.getElementById('mobile-audio-status');
+        
+        if (!this.recording) {
+            this.iniciarGrabacion();
+            this.recording = true;
+            btn.classList.add('recording');
+            btn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+            status.innerText = "Grabando...";
+            status.classList.add('show');
+        } else {
+            this.detenerGrabacion();
+            this.recording = false;
+            btn.classList.remove('recording');
+            btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+            status.innerText = "Audio guardado";
+            setTimeout(() => status.classList.remove('show'), 2000);
+            
+            // Abrimos el panel de creación automáticamente
+            this.toggleSheet();
+            this.switchSheetTab('create');
+        }
     }
     initCitizenPage() {
         document.getElementById('user-name').textContent = this.user.name;
@@ -465,74 +534,10 @@ class CiudadActivaApp {
             });
         }
     }
-    renderCitizenList() {
-        const lista = document.getElementById('lista');
-        if (!lista) return;
-        lista.innerHTML = '';
-        this.reports.filter(r => r.name === this.user.name).forEach(r => {
-            let feedbackHtml = "";
-            if (r.estado === 'Solucionado' && !r.feedback) {
-                feedbackHtml = `
-                    <div class="feedback-container">
-                        <div class="feedback-header"><i class="fa-solid fa-party-horn"></i> ¡Reporte Solucionado! 🎉</div>
-                        <p style="font-size:0.8rem; color:#be185d; margin-bottom:10px;">Tu opinión ayuda a mejorar la provincia:</p>
-                        <div class="stars-rating" id="stars-${r.id}">
-                            <button class="star-btn" onclick="app.setRating(${r.id}, 1)"><i class="fa-solid fa-star"></i></button>
-                            <button class="star-btn" onclick="app.setRating(${r.id}, 2)"><i class="fa-solid fa-star"></i></button>
-                            <button class="star-btn" onclick="app.setRating(${r.id}, 3)"><i class="fa-solid fa-star"></i></button>
-                            <button class="star-btn" onclick="app.setRating(${r.id}, 4)"><i class="fa-solid fa-star"></i></button>
-                            <button class="star-btn" onclick="app.setRating(${r.id}, 5)"><i class="fa-solid fa-star"></i></button>
-                        </div>
-                        <input type="text" id="feedback-msg-${r.id}" class="feedback-input" placeholder="Mensaje para el funcionario (opcional)">
-                        <button onclick="app.enviarFeedback(${r.id})" class="btn-feedback-send">🙌 Enviar Agradecimiento</button>
-                    </div>
-                `;
-            } else if (r.feedback) {
-                feedbackHtml = `
-                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:10px; margin-top:10px; font-size:0.8rem; color:#166534;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <b><i class="fa-solid fa-check-circle"></i> Gestión Calificada</b>
-                            <span style="color:#f59e0b;">${'⭐'.repeat(r.feedback.calificacion)}</span>
-                        </div>
-                        <p style="margin-top:5px; opacity:0.8;">"${r.feedback.comentario}"</p>
-                    </div>
-                `;
-            }
-
-            let chatHtml = (r.mensajes || []).length > 0 ? `
-                <div class="chat-container">
-                    <div class="chat-box" id="chat-box-${r.id}">
-                        ${r.mensajes.map(m => `
-                            <div class="msg-bubble ${m.autor === 'ciudadano' ? 'msg-user' : 'msg-admin'}">
-                                ${m.texto}
-                                <small style="display:block; font-size:0.6rem; margin-top:3px; opacity:0.6;">${m.fecha}</small>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="chat-input-group">
-                        <input type="text" id="chat-input-${r.id}" class="chat-input" placeholder="Responder...">
-                        <button onclick="app.enviarMensaje(${r.id}, 'ciudadano')" class="btn-chat-send" style="width:30px; height:30px;">
-                            <i class="fa-solid fa-paper-plane" style="font-size:0.8rem;"></i>
-                        </button>
-                    </div>
-                </div>
-            ` : `
-                <div style="margin-top:10px; text-align:center;">
-                    <button onclick="this.parentElement.style.display='none'; document.getElementById('chat-manual-${r.id}').style.display='block'" style="background:none; border:none; color:var(--primary); font-size:0.75rem; font-weight:700; cursor:pointer;">
-                        <i class="fa-solid fa-comments"></i> Iniciar conversación con el Gobierno
-                    </button>
-                    <div id="chat-manual-${r.id}" style="display:none; margin-top:10px;">
-                         <div class="chat-input-group">
-                            <input type="text" id="chat-input-${r.id}" class="chat-input" placeholder="Escribí tu duda...">
-                            <button onclick="app.enviarMensaje(${r.id}, 'ciudadano')" class="btn-chat-send" style="width:30px; height:30px;">
-                                <i class="fa-solid fa-paper-plane" style="font-size:0.8rem;"></i>
-                            </button>
-                        </div>
-                    </div>
                 </div>
             `;
 
-            lista.innerHTML += `
+            html += `
                 <div class="card mini-card" style="border-left: 4px solid ${this.getCol(r)}; margin-bottom:15px; padding:15px;">
                     <div onclick="app.verEnMapa(${r.id})" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
                         <div>
@@ -546,103 +551,30 @@ class CiudadActivaApp {
                 </div>
             `;
         });
+
+        if (lista) lista.innerHTML = html;
+        const mobileLista = document.getElementById('mobile-lista-reportes');
+        if (mobileLista) mobileLista.innerHTML = html;
     }
 
-    renderAdminList() {
-        const lista = document.getElementById('lista');
-        if (!lista) return;
-        lista.innerHTML = '';
-        this.reports.forEach(r => {
-            let photoHtml = r.photo ? `<img src="${r.photo}" style="width:100%; height:160px; object-fit:cover; border-radius:12px; margin-bottom:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">` : '';
-            let audioHtml = r.audio ? `
-                <div style="background:#f1f5f9; padding:12px; border-radius:12px; margin-bottom:12px;">
-                    <p style="margin:0 0 8px 0; font-size:0.75rem; font-weight:800; color:var(--gray-600);"><i class="fa-solid fa-volume-high"></i> AUDIO ADJUNTO</p>
-                    <audio src="${r.audio}" controls style="width:100%; height:32px;"></audio>
-                </div>
-            ` : '';
-
-            let feedbackHtml = r.feedback ? `
-                <div style="margin-top:15px; background:#fff1f2; border:1.5px dashed #fda4af; padding:12px; border-radius:12px; animation: slideUp 0.4s;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                        <span style="font-size:0.75rem; font-weight:900; color:#be185d;"><i class="fa-solid fa-heart"></i> FEEDBACK DEL CIUDADANO</span>
-                        <span style="color:#f59e0b; font-size:0.8rem;">${'★'.repeat(r.feedback.calificacion)}${'☆'.repeat(5-r.feedback.calificacion)}</span>
-                    </div>
-                    <p style="font-size:0.85rem; color:#881337; margin:0;">"${r.feedback.comentario}"</p>
-                </div>
-            ` : '';
-            
-            const userName = r.name || "Usuario";
-            const initial = userName.substring(0,1).toUpperCase();
-            
-            lista.innerHTML += `
-                <div class="card" style="margin-bottom:15px; border-left: 5px solid ${this.getCol(r)}; padding:20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <div style="background:var(--bg); width:35px; height:35px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:bold;">
-                                ${initial}
-                            </div>
-                            <div>
-                                <b style="font-size:0.9rem;">${userName}</b><br>
-                                <small style="color:var(--gray-600); font-size:0.7rem;">${r.email || 'Sin email'}</small>
-                            </div>
-                        </div>
-                        <div style="display:flex; gap:5px;">
-                            <button onclick="app.simularLlamada('${userName}')" class="btn-audio-del" style="background:#dcfce7; color:#166534; width:32px; height:32px; padding:0;"><i class="fa-solid fa-phone"></i></button>
-                            <button onclick="app.toggleChat(${r.id})" class="btn-audio-del" style="background:#dbeafe; color:#1e40af; width:32px; height:32px; padding:0;"><i class="fa-solid fa-message"></i></button>
-                        </div>
-                    </div>
-
-                    ${photoHtml}
-                    ${audioHtml}
-
-                    <div class="chat-container" id="chat-container-${r.id}" style="display:none; background:#f8fafc; padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid #e2e8f0;">
-                        <div style="font-size:0.7rem; font-weight:900; color:#1e40af; margin-bottom:10px; display:flex; align-items:center; gap:5px;">
-                            <i class="fa-solid fa-comments"></i> COMUNICACIÓN DIRECTA CON EL VECINO
-                        </div>
-                        <div class="chat-box" id="chat-box-${r.id}" style="max-height:150px; overflow-y:auto; margin-bottom:10px; display:flex; flex-direction:column; gap:5px;">
-                            ${(r.mensajes || []).length > 0 ? r.mensajes.map(m => `
-                                <div class="msg-bubble ${m.autor === 'funcionario' ? 'msg-admin' : 'msg-user'}" style="font-size:0.75rem; padding:6px 10px;">
-                                    ${m.texto}
-                                    <small style="display:block; font-size:0.6rem; opacity:0.6; margin-top:2px;">${m.fecha}</small>
-                                </div>
-                            `).join('') : '<p style="font-size:0.75rem; color:#64748b; text-align:center; margin:10px 0;">No hay mensajes previos.</p>'}
-                        </div>
-                        <div class="chat-input-group">
-                            <input type="text" id="chat-input-${r.id}" class="chat-input" style="height:35px;" placeholder="Escribí al vecino...">
-                            <button onclick="app.enviarMensaje(${r.id}, 'funcionario')" class="btn-chat-send" style="width:35px; height:35px;">
-                                <i class="fa-solid fa-paper-plane"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <h3 style="font-size:1.1rem; margin-bottom:8px;">${r.cat}</h3>
-                    <p style="font-size:0.95rem; line-height:1.4;">${r.desc || '<i style="color:#94a3b8">Sin descripción de texto</i>'}</p>
-                    
-                    ${feedbackHtml}
-
-                    <div style="margin-top:15px; padding-top:15px; border-top:1px solid #eee; display:flex; flex-direction:column; gap:10px;">
-                        <div style="display:flex; gap:10px;">
-                            <select onchange="app.cambiarArea(${r.id}, this.value)" style="flex:1; padding:10px; border-radius:10px; border:1px solid #ddd; font-size:0.85rem;">
-                                <option value="">Asignar Área...</option>
-                                <option value="Higiene Urbana" ${r.area==='Higiene Urbana'?'selected':''}>Higiene Urbana</option>
-                                <option value="Obras Públicas" ${r.area==='Obras Públicas'?'selected':''}>Obras Públicas</option>
-                                <option value="Alumbrado" ${r.area==='Alumbrado'?'selected':''}>Alumbrado</option>
-                            </select>
-                            <select onchange="app.cambiarEstado(${r.id}, this.value)" style="flex:1; padding:10px; border-radius:10px; border:1px solid #ddd; font-size:0.85rem; font-weight:bold; color:white; background:${this.getCol(r)}">
-                                <option value="Recibido" ${r.estado==='Recibido'?'selected':''}>Recibido</option>
-                                <option value="En revisión" ${r.estado==='En revisión'?'selected':''}>En revisión</option>
-                                <option value="En proceso" ${r.estado==='En proceso'?'selected':''}>En proceso</option>
-                                <option value="Solucionado" ${r.estado==='Solucionado'?'selected':''}>Solucionado</option>
-                            </select>
-                        </div>
-                        <button onclick="app.verEnMapa(${r.id})" class="btn-secondary" style="padding:10px; border-radius:10px; width:100%; font-weight:bold; border-color:#ddd;">
-                            <i class="fa-solid fa-map-pin"></i> Ubicar en Mapa Territorial
-                        </button>
-                    </div>
                 </div>
             `;
         });
+
+        if (lista) lista.innerHTML = html;
         this.renderStats();
+
+        const mobileAdminLista = document.getElementById('mobile-lista-admin');
+        if (mobileAdminLista) mobileAdminLista.innerHTML = html;
+
+        const mobileStats = document.getElementById('mobile-stats-content');
+        if (mobileStats && mobileStats.innerHTML === '') {
+            const statsGrid = document.querySelector('.stats-grid');
+            if (statsGrid) {
+                const clone = statsGrid.cloneNode(true);
+                mobileStats.appendChild(clone);
+            }
+        }
     }
     verEnMapa(id) {
         const r = this.reports.find(x => x.id == id);

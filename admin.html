@@ -167,6 +167,37 @@
         </main>
     </div>
 
+    <!-- FAB Botón Flotante (Solo Mobile) -->
+    <div class="mobile-fab-container">
+        <div id="mobile-audio-status" class="fab-status">Listo para grabar</div>
+        <button id="mobile-audio-btn" class="fab-btn" onclick="app.toggleMobileAudio()">
+            <i class="fa-solid fa-microphone"></i>
+        </button>
+    </div>
+
+    <!-- Bottom Sheet (Panel Deslizable) -->
+    <div id="bottom-sheet" class="bottom-sheet">
+        <div class="sheet-handle" onclick="app.toggleSheet()"></div>
+        <div class="sheet-content">
+            <div class="sheet-tabs">
+                <button id="tab-reports" class="sheet-tab active" onclick="app.switchSheetTab('reports')">Gestión</button>
+                <button id="tab-activity" class="sheet-tab" onclick="app.switchSheetTab('activity')">Estadísticas</button>
+            </div>
+            
+            <div id="sheet-view-reports" class="sheet-view active">
+                <div id="mobile-lista-admin">
+                    <!-- Lista de gestión para admin -->
+                </div>
+            </div>
+            
+            <div id="sheet-view-activity" class="sheet-view">
+                <div id="mobile-stats-content">
+                    <!-- Gráficos y estadísticas -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container"></div>
 
     <!-- Modal Nueva Obra -->
