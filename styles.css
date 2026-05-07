@@ -164,21 +164,30 @@ body::before {
     transform: scale(0.95);
 }
 
-/* 📱 ADAPTACIÓN VISUAL POR DISPOSITIVO (MODO MOBILE PRO) */
+/* ============================================================
+   📱 MODO MÓVIL — DISEÑO NATIVO LIMPIO
+   ============================================================ */
+
 body.mobile-mode {
     --radius: 20px;
     overflow: hidden;
 }
 
-/* Mobile Header */
+/* ─── CABECERA SUPERIOR MÓVIL ─── */
 .mobile-header {
     display: none;
     align-items: center;
     justify-content: space-between;
-    padding: 15px 20px;
+    padding: 0 18px;
+    height: 56px;
+    min-height: 56px;
     background: var(--card);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    z-index: 2000;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    position: sticky;
+    top: 0;
+    z-index: 2100;
+    flex-shrink: 0;
 }
 
 body.mobile-mode .mobile-header {
@@ -188,26 +197,40 @@ body.mobile-mode .mobile-header {
 .mobile-header-logo {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 9px;
     font-weight: 900;
     color: var(--primary);
-    font-size: 1.1rem;
-    letter-spacing: 0.04em;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .mobile-menu-btn {
     background: transparent;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     color: var(--gray-600);
     cursor: pointer;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+    min-height: unset !important;
 }
 
-/* Mobile Sidebar Overlay */
+.mobile-menu-btn:hover { background: var(--bg); }
+
+/* ─── OVERLAY DEL SIDEBAR ─── */
 .mobile-sidebar-overlay {
     display: none;
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    inset: 0;
     background: rgba(0,0,0,0.5);
     z-index: 2999;
     opacity: 0;
@@ -219,36 +242,62 @@ body.mobile-mode .mobile-sidebar-overlay.active {
     opacity: 1;
 }
 
-/* Layout and Sidebar in mobile */
+/* ─── LAYOUT PRINCIPAL EN MÓVIL ─── */
 body.mobile-mode .layout {
     flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
 }
 
+/* ─── SIDEBAR COMO DRAWER LATERAL ─── */
 body.mobile-mode .sidebar {
     position: fixed;
     top: 0;
     left: -300px;
+    width: 280px;
     height: 100vh;
     z-index: 3000;
-    box-shadow: 10px 0 25px rgba(0,0,0,0.1);
-    transition: left 0.3s ease;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+    transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
     display: flex !important;
+    flex-direction: column;
+    overflow-y: auto;
 }
 
 body.mobile-mode .sidebar.active {
     left: 0 !important;
 }
 
+/* ─── CONTENIDO PRINCIPAL ─── */
 body.mobile-mode .main-content {
-    padding: 20px;
-    height: calc(100vh - 60px);
+    flex: 1;
+    height: calc(100vh - 56px);
     overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
     position: relative;
 }
 
-/* En mobile, los headers y mapas se muestran igual que en PC pero adaptados */
+/* ─── VIEW HEADER NORMAL (NO FLOTANTE) ─── */
+body.mobile-mode .view-header {
+    position: static;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 14px;
+    pointer-events: auto;
+}
+
 body.mobile-mode .view-header h1 {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
+    margin-bottom: 4px;
+}
+
+body.mobile-mode .view-header p {
+    font-size: 0.85rem;
 }
 
 /* 🎤 FAB (Floating Action Button) */
@@ -1941,122 +1990,154 @@ input:focus {
     justify-content: center;
 }
 
-/* ============================================================
-   🚀 MODO MÓVIL AVANZADO (PROMPT MODO MÓVIL)
-   ============================================================ */
 
-body.mobile-mode {
-    overflow: hidden; /* Evita scroll doble con el panel */
+
+
+
+/* ─── OCULTAR ELEMENTOS SOLO DE ESCRITORIO EN MÓVIL ─── */
+body.mobile-mode .sos-fab { display: none !important; }
+
+/* ─── MAPA EN MOBILE ─── */
+body.mobile-mode .map-box {
+    height: 58vw;
+    min-height: 220px;
+    max-height: 340px;
+    border-radius: 16px;
+    overflow: hidden;
 }
 
-
-/* 🎤 BOTÓN FLOTANTE (FAB) */
-.mobile-fab-container {
-    display: none; /* Oculto por defecto */
-    position: fixed;
-    bottom: 90px; /* Encima del handle del bottom sheet si está cerrado */
-    right: 20px;
-    z-index: 3000;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
-    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+body.mobile-mode #mapaView {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
 }
 
-body.mobile-mode .mobile-fab-container {
-    display: flex;
-}
-
-.fab-btn {
-    width: 65px;
-    height: 65px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 1.5rem;
-    box-shadow: 0 6px 20px rgba(230, 25, 43, 0.4);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.3s;
-    border: 3px solid white;
-}
-
-.fab-btn.recording {
-    background: #d11124;
-    animation: pulseRecording 1.5s infinite;
-}
-
-@keyframes pulseRecording {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(209, 17, 36, 0.7); }
-    70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(209, 17, 36, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(209, 17, 36, 0); }
-}
-
-.fab-status {
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: 0.3s;
-    pointer-events: none;
-}
-
-.fab-status.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-
-
-/* OCULTAR ELEMENTOS DE ESCRITORIO EN MÓVIL */
-body.mobile-mode .sos-fab {
-    display: none !important;
-}
-
-/* BOTONES GRANDES PARA MÓVIL */
-body.mobile-mode button,
-body.mobile-mode .btn-primary,
+/* ─── BOTONES TÁCTILES GRANDES ─── */
 body.mobile-mode .nav-btn {
-    min-height: 54px;
-    font-size: 1.05rem;
-    border-radius: 14px;
-}
-
-body.mobile-mode .input-group label {
+    min-height: 50px;
     font-size: 1rem;
-    margin-bottom: 8px;
-}
-
-body.mobile-mode select,
-body.mobile-mode input,
-body.mobile-mode textarea {
-    font-size: 1rem;
-    padding: 14px;
     border-radius: 12px;
 }
 
-/* LISTA DE REPORTES EN MÓVIL */
-#mobile-lista-reportes {
-    margin-top: 15px;
+body.mobile-mode .btn-primary,
+body.mobile-mode .btn-secondary {
+    min-height: 50px;
+    font-size: 1rem;
+    border-radius: 12px;
+    width: 100%;
 }
 
-.mobile-report-card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 18px;
+/* Los botones pequeños (ícono/close) NO deben agrandarse */
+body.mobile-mode .close-btn,
+body.mobile-mode .mobile-menu-btn,
+body.mobile-mode .btn-logout {
+    min-height: unset !important;
+    width: auto !important;
+    font-size: inherit;
+}
+
+/* ─── FORMULARIOS ─── */
+body.mobile-mode .input-group label {
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+}
+
+body.mobile-mode select,
+body.mobile-mode input[type="text"],
+body.mobile-mode input[type="email"],
+body.mobile-mode input[type="number"],
+body.mobile-mode textarea {
+    font-size: 1rem;
+    padding: 13px 14px;
+    border-radius: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ─── TARJETAS / CARDS ─── */
+body.mobile-mode .card {
+    border-radius: 16px;
     padding: 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    margin-bottom: 14px;
 }
 
-/* AJUSTES PARA EL MAPA CUANDO EL PANEL ESTÁ ABIERTO */
-.bottom-sheet.open + .mobile-fab-container {
-    transform: translateY(-20px);
+/* ─── TABLAS Y ESTADÍSTICAS ─── */
+body.mobile-mode .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+/* ─── MODALES ─── */
+body.mobile-mode .obra-modal-content {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 20px;
+    padding: 20px;
+    margin: auto;
+}
+
+body.mobile-mode .obra-modal-grid {
+    grid-template-columns: 1fr !important;
+}
+
+/* ─── LISTA DE REPORTES ─── */
+body.mobile-mode .report-card {
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+}
+
+body.mobile-mode .report-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+body.mobile-mode .report-actions button {
+    flex: 1 1 auto;
+    min-width: 100px;
+}
+
+/* ─── MAPA DE TRANSPORTE ─── */
+body.mobile-mode .transporte-layout {
+    flex-direction: column !important;
+}
+
+body.mobile-mode .transporte-sidebar {
+    width: 100% !important;
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+body.mobile-mode #transporteMap,
+body.mobile-mode #servicios-map,
+body.mobile-mode #emergencias-map,
+body.mobile-mode #obras-map {
+    height: 240px !important;
+    border-radius: 16px;
+    margin-bottom: 14px;
+}
+
+/* ─── SECCIÓN DE EMERGENCIAS ─── */
+body.mobile-mode .emerg-alerta-card {
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 0.92rem;
+}
+
+/* ─── TABS ─── */
+body.mobile-mode .tab-btn {
+    font-size: 0.85rem;
+    padding: 8px 10px;
+    min-height: unset !important;
+}
+
+/* ─── SCROLLBAR DELGADO EN MOBILE ─── */
+body.mobile-mode ::-webkit-scrollbar { width: 4px; }
+body.mobile-mode ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ─── FOOTER PADDING PARA NO TAPAR FAB ─── */
+body.mobile-mode .main-content > .view-container.active:last-child {
+    padding-bottom: 90px;
 }
