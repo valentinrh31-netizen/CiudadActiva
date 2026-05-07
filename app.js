@@ -96,7 +96,14 @@ class CiudadActivaApp {
     // --- MOBILE UI LOGIC ---
     toggleSheet() {
         const sheet = document.getElementById('bottom-sheet');
-        if (sheet) sheet.classList.toggle('open');
+        if (sheet) {
+            sheet.classList.toggle('open');
+            // Si se abre el sheet, rotar el handle o cambiar label
+            const label = sheet.querySelector('.sheet-drag-label');
+            if (label) {
+                label.innerText = sheet.classList.contains('open') ? "Deslizar para cerrar" : "Deslizar para ver más";
+            }
+        }
     }
 
     switchSheetTab(tab) {
@@ -111,15 +118,18 @@ class CiudadActivaApp {
 
         // Lógica especial para cargar contenido en la pestaña
         if (tab === 'create') this.prepareMobileCreate();
+        if (tab === 'reports') this.renderCitizenList();
     }
 
     prepareMobileCreate() {
         const desktopForm = document.getElementById('report-form');
         const mobileContainer = document.getElementById('mobile-create-content');
-        if (desktopForm && mobileContainer && mobileContainer.innerHTML === '') {
-            // Clonamos el formulario o lo movemos (clonar es más seguro para no romper eventos)
+        if (desktopForm && mobileContainer && (mobileContainer.innerHTML === '' || mobileContainer.innerHTML.includes('<!-- empty -->'))) {
+            // Clonamos el formulario
             const clone = desktopForm.cloneNode(true);
             clone.id = 'mobile-report-form';
+            
+            mobileContainer.innerHTML = '';
             mobileContainer.appendChild(clone);
             this.bindMobileFormEvents(clone);
         }
@@ -128,11 +138,45 @@ class CiudadActivaApp {
     bindMobileFormEvents(form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            // Lógica similar a bindCitizenEvents pero usando los IDs del clon si es necesario
-            // O simplemente llamar a la lógica común
-            this.showToast("Reporte enviado desde móvil", "success");
+            if (!this.tempPos) return this.showToast("Marca el lugar en el mapa", "error");
+            
+            const photoInput = form.querySelector('#photo');
+            let photoBase64 = null;
+            if (photoInput && photoInput.files.length > 0) {
+                photoBase64 = await this.processImage(photoInput.files[0]);
+            }
+
+            const report = {
+                id: Date.now(), 
+                cat: form.querySelector('#cat').value,
+                urgency: form.querySelector('#urgency').value,
+                desc: form.querySelector('#desc').value || (this.audioBase64 ? "Reporte por voz" : ""),
+                pos: [this.tempPos.lat, this.tempPos.lng],
+                estado: "Recibido", 
+                name: this.user.name, 
+                email: this.user.email,
+                fecha: new Date().toLocaleDateString(),
+                votos: 0, 
+                photo: photoBase64, 
+                audio: this.audioBase64,
+                area: "Sin asignar"
+            };
+            this.reports.push(report);
+            this.save();
+            this.showToast("✅ Reporte enviado con éxito", "success");
+            
+            form.reset();
+            this.borrarAudio();
             this.toggleSheet();
+            this.renderMarkers();
+            this.renderCitizenList();
+            this.mostrar('mapa');
         });
+
+        const photoInput = form.querySelector('#photo');
+        if (photoInput) {
+            photoInput.addEventListener('change', () => this.previewPhoto(photoInput));
+        }
     }
 
     toggleMobileAudio() {
@@ -144,19 +188,25 @@ class CiudadActivaApp {
             this.recording = true;
             btn.classList.add('recording');
             btn.innerHTML = '<i class="fa-solid fa-stop"></i>';
-            status.innerText = "Grabando...";
-            status.classList.add('show');
+            if (status) {
+                status.innerText = "Grabando...";
+                status.classList.add('show');
+            }
         } else {
             this.detenerGrabacion();
             this.recording = false;
             btn.classList.remove('recording');
             btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-            status.innerText = "Audio guardado";
-            setTimeout(() => status.classList.remove('show'), 2000);
+            if (status) {
+                status.innerText = "Audio guardado";
+                setTimeout(() => status.classList.remove('show'), 2000);
+            }
             
-            // Abrimos el panel de creación automáticamente
-            this.toggleSheet();
-            this.switchSheetTab('create');
+            setTimeout(() => {
+                const sheet = document.getElementById('bottom-sheet');
+                if (sheet && !sheet.classList.contains('open')) this.toggleSheet();
+                this.switchSheetTab('create');
+            }, 500);
         }
     }
     initCitizenPage() {
