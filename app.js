@@ -94,102 +94,85 @@ class CiudadActivaApp {
     }
 
     // --- MOBILE UI LOGIC ---
-    toggleSheet() {
-        const sheet = document.getElementById('bottom-sheet');
-        if (sheet) {
-            sheet.classList.toggle('open');
-            // Si se abre el sheet, rotar el handle o cambiar label
-            const label = sheet.querySelector('.sheet-drag-label');
-            if (label) {
-                label.innerText = sheet.classList.contains('open') ? "Deslizar para cerrar" : "Deslizar para ver más";
-            }
-        }
-    }
-
-    switchSheetTab(tab) {
-        document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.sheet-view').forEach(v => v.classList.remove('active'));
-        
-        const targetTab = document.getElementById(`tab-${tab}`);
-        const targetView = document.getElementById(`sheet-view-${tab}`);
-        
-        if (targetTab) targetTab.classList.add('active');
-        if (targetView) targetView.classList.add('active');
-
-        // Lógica especial para cargar contenido en la pestaña
-        if (tab === 'create') this.prepareMobileCreate();
-        if (tab === 'reports') this.renderCitizenList();
-    }
-
-    prepareMobileCreate() {
-        const desktopForm = document.getElementById('report-form');
-        const mobileContainer = document.getElementById('mobile-create-content');
-        if (desktopForm && mobileContainer && (mobileContainer.innerHTML === '' || mobileContainer.innerHTML.includes('<!-- empty -->'))) {
-            // Clonamos el formulario
-            const clone = desktopForm.cloneNode(true);
-            clone.id = 'mobile-report-form';
-            
-            mobileContainer.innerHTML = '';
-            mobileContainer.appendChild(clone);
-            this.bindMobileFormEvents(clone);
-        }
-    }
-
-    bindMobileFormEvents(form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!this.tempPos) return this.showToast("Marca el lugar en el mapa", "error");
-            
-            const photoInput = form.querySelector('#photo');
-            let photoBase64 = null;
-            if (photoInput && photoInput.files.length > 0) {
-                photoBase64 = await this.processImage(photoInput.files[0]);
-            }
-
-            const report = {
-                id: Date.now(), 
-                cat: form.querySelector('#cat').value,
-                urgency: form.querySelector('#urgency').value,
-                desc: form.querySelector('#desc').value || (this.audioBase64 ? "Reporte por voz" : ""),
-                pos: [this.tempPos.lat, this.tempPos.lng],
-                estado: "Recibido", 
-                name: this.user.name, 
-                email: this.user.email,
-                fecha: new Date().toLocaleDateString(),
-                votos: 0, 
-                photo: photoBase64, 
-                audio: this.audioBase64,
-                area: "Sin asignar"
-            };
-            this.reports.push(report);
-            this.save();
-            this.showToast("✅ Reporte enviado con éxito", "success");
-            
-            form.reset();
-            this.borrarAudio();
-            this.toggleSheet();
-            this.renderMarkers();
-            this.renderCitizenList();
-            this.mostrar('mapa');
-        });
-
-        const photoInput = form.querySelector('#photo');
-        if (photoInput) {
-            photoInput.addEventListener('change', () => this.previewPhoto(photoInput));
+    toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.mobile-sidebar-overlay');
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
         }
     }
 
     toggleMobileAudio() {
         if (!this.recording) {
+            if (!this.tempPos) {
+                return this.showToast("Por favor, marca tu ubicación en el mapa primero", "error");
+            }
             this.iniciarGrabacion();
         } else {
-            this.detenerGrabacion();
+            this.detenerGrabacionMobile();
+        }
+    }
+
+    detenerGrabacionMobile() {
+        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+            this.mediaRecorder.stop();
+            this.stopTimer();
+            this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
             
-            // Abrimos el panel de creación automáticamente después de un breve delay
+            const mobileBtn = document.getElementById('mobile-audio-btn');
+            const mobileStatus = document.getElementById('mobile-audio-status');
+            if (mobileBtn) {
+                mobileBtn.classList.remove('recording');
+                mobileBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                if (mobileStatus) {
+                    mobileStatus.innerText = "Audio guardado. Enviando...";
+                }
+            }
+            this.recording = false;
+
+            // Wait for FileReader in onstop
             setTimeout(() => {
-                const sheet = document.getElementById('bottom-sheet');
-                if (sheet && !sheet.classList.contains('open')) this.toggleSheet();
-                this.switchSheetTab('create');
+                if (this.audioBase64 && this.tempPos) {
+                    const report = {
+                        id: Date.now(), 
+                        cat: "Calles", // default for audio
+                        urgency: "Medio",
+                        desc: "Reporte de voz rápido",
+                        pos: [this.tempPos.lat, this.tempPos.lng],
+                        estado: "Recibido", 
+                        name: this.user.name, 
+                        email: this.user.email,
+                        fecha: new Date().toLocaleDateString(),
+                        votos: 0, 
+                        photo: null, 
+                        audio: this.audioBase64,
+                        area: "Sin asignar"
+                    };
+                    this.reports.push(report);
+                    this.save();
+                    this.showToast("✅ Reporte enviado a las autoridades", "success");
+                    
+                    if (mobileStatus) {
+                        mobileStatus.innerText = "¡Enviado!";
+                        setTimeout(() => mobileStatus.classList.remove('show'), 2000);
+                    }
+                    this.borrarAudio();
+                    if (this.tempMarker) { this.map.removeLayer(this.tempMarker); this.tempMarker = null; }
+                    this.tempPos = null;
+                    const locIndicator = document.getElementById('location-indicator');
+                    const locText = document.getElementById('location-text');
+                    if (locIndicator && locText) {
+                        locIndicator.classList.add('no-location');
+                        locIndicator.classList.remove('has-location');
+                        locText.innerText = "Tocá el mapa para marcar la ubicación";
+                    }
+                    
+                    this.renderMarkers();
+                    this.renderCitizenList();
+                } else {
+                    this.showToast("Error al procesar el reporte de audio", "error");
+                }
             }, 800);
         }
     }
@@ -836,13 +819,32 @@ class CiudadActivaApp {
         document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         const target = document.getElementById(vista + "View");
-        if (target) target.classList.add('active');
+        if (target) {
+            target.classList.add('active');
+            const h1 = target.querySelector('h1');
+            const titleElem = document.getElementById('mobile-header-title');
+            if (h1 && titleElem) {
+                const text = h1.textContent.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDE4F]/g, '').trim();
+                titleElem.textContent = text.toUpperCase();
+            } else if (titleElem) {
+                titleElem.textContent = "CIUDAD ACTIVA";
+            }
+        }
         if (vista === 'mapa' && this.map) setTimeout(() => this.map.invalidateSize(), 200);
         if (vista === 'obras' && this.obrasMap) setTimeout(() => { this.obrasMap.invalidateSize(); this.renderObrasList(); }, 200);
         if (vista === 'adminObras') setTimeout(() => { this.renderAdminObrasList(); }, 200);
         if (vista === 'transporte') setTimeout(() => { this.initTransporteMap(); }, 200);
         if (vista === 'servicios') setTimeout(() => { this.initServiciosMap(); }, 200);
         if (vista === 'emergencias') setTimeout(() => { this.initEmergenciasMap(); }, 200);
+        this.cerrarMenuMobile();
+    }
+    cerrarMenuMobile() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.mobile-sidebar-overlay');
+        if (sidebar && overlay && sidebar.classList.contains('active')) {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
     }
     logout() { localStorage.removeItem('ca_user'); window.location.href = "index.html"; }
     save() { localStorage.setItem('ca_reports', JSON.stringify(this.reports)); }
@@ -1704,8 +1706,6 @@ class CiudadActivaApp {
         localStorage.setItem('ca_reports', JSON.stringify(this.reports));
     }
 
-    toggleSOS() { document.getElementById('sos-menu').classList.toggle('active'); }
-    callSOS(type) { this.showToast(`Llamando a ${type}...`, "success"); }
 
     // --- REPORTE INTELIGENTE (AUDIO + FOTO) ---
     async iniciarGrabacion() {
