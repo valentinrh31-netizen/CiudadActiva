@@ -2153,10 +2153,7 @@ body.mobile-mode .bottom-sheet {
 }
 
 /* OCULTAR ELEMENTOS DE ESCRITORIO EN MÓVIL */
-body.mobile-mode .sidebar,
-body.mobile-mode .sos-fab,
-body.mobile-mode .sidebar-header,
-body.mobile-mode .nav-divider {
+body.mobile-mode .sos-fab {
     display: none !important;
 }
 
