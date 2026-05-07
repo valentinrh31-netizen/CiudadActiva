@@ -15,6 +15,23 @@
 <body class="app-layout">
 
     <div class="layout">
+        <!-- Mobile Header (Hidden in PC mode) -->
+        <header class="mobile-header">
+            <div class="mobile-header-logo">
+                <svg viewBox="0 0 60 60" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="60" height="60" rx="8" fill="#e6192b"/>
+                    <polygon points="10,50 30,10 50,50" fill="white"/>
+                </svg>
+                <span>CIUDAD ACTIVA</span>
+            </div>
+            <button class="mobile-menu-btn" onclick="app.toggleMobileMenu()">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+        </header>
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div class="mobile-sidebar-overlay" onclick="app.toggleMobileMenu()"></div>
+
         <!-- Sidebar -->
         <aside class="sidebar">
             <!-- LOGO GOBIERNO DE LA RIOJA -->
@@ -455,15 +472,6 @@
         </main>
     </div>
 
-    <!-- SOS Button -->
-    <button id="sos-btn" class="sos-fab" onclick="app.toggleSOS()">
-        <i class="fa-solid fa-phone"></i>
-    </button>
-    <div id="sos-menu" class="sos-menu">
-        <button class="sos-option red" onclick="app.callSOS('Bomberos')">🚒 Bomberos</button>
-        <button class="sos-option blue" onclick="app.callSOS('Policía')">👮 Policía</button>
-    </div>
-
     <!-- FAB Botón Flotante (Solo Mobile) -->
     <div class="mobile-fab-container">
         <div id="mobile-audio-status" class="fab-status">Listo para grabar</div>
@@ -472,42 +480,7 @@
         </button>
     </div>
 
-    <!-- Bottom Sheet (Panel Deslizable) -->
-    <div id="bottom-sheet" class="bottom-sheet">
-        <div class="sheet-header" onclick="app.toggleSheet()">
-            <div class="sheet-handle"></div>
-            <div class="sheet-drag-label">Deslizar para ver más</div>
-        </div>
-        
-        <div class="sheet-tabs">
-            <button id="tab-reports" class="sheet-tab active" onclick="app.switchSheetTab('reports')">Reportes</button>
-            <button id="tab-create" class="sheet-tab" onclick="app.switchSheetTab('create')">Crear</button>
-            <button id="tab-activity" class="sheet-tab" onclick="app.switchSheetTab('activity')">Actividad</button>
-        </div>
 
-        <div class="sheet-content">
-            <div id="sheet-view-reports" class="sheet-view active">
-                <div id="mobile-lista-reportes">
-                    <!-- Los reportes se renderizan aquí en mobile -->
-                </div>
-            </div>
-            
-            <div id="sheet-view-create" class="sheet-view">
-                <div id="mobile-create-content">
-                    <!-- El formulario de reporte se mueve aquí o se clona -->
-                </div>
-            </div>
-            
-            <div id="sheet-view-activity" class="sheet-view">
-                <div id="mobile-activity-content">
-                    <div class="card">
-                        <h3>Mi Impacto en la Ciudad</h3>
-                        <p style="font-size:0.9rem; color:var(--gray-600); margin-top:10px;">Has ayudado a resolver <b id="mobile-resolved-count">0</b> problemas este mes.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div id="toast-container"></div>
 

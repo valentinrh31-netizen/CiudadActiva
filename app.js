@@ -180,33 +180,17 @@ class CiudadActivaApp {
     }
 
     toggleMobileAudio() {
-        const btn = document.getElementById('mobile-audio-btn');
-        const status = document.getElementById('mobile-audio-status');
-        
         if (!this.recording) {
             this.iniciarGrabacion();
-            this.recording = true;
-            btn.classList.add('recording');
-            btn.innerHTML = '<i class="fa-solid fa-stop"></i>';
-            if (status) {
-                status.innerText = "Grabando...";
-                status.classList.add('show');
-            }
         } else {
             this.detenerGrabacion();
-            this.recording = false;
-            btn.classList.remove('recording');
-            btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-            if (status) {
-                status.innerText = "Audio guardado";
-                setTimeout(() => status.classList.remove('show'), 2000);
-            }
             
+            // Abrimos el panel de creación automáticamente después de un breve delay
             setTimeout(() => {
                 const sheet = document.getElementById('bottom-sheet');
                 if (sheet && !sheet.classList.contains('open')) this.toggleSheet();
                 this.switchSheetTab('create');
-            }, 500);
+            }, 800);
         }
     }
     initCitizenPage() {
@@ -563,7 +547,7 @@ class CiudadActivaApp {
                 };
                 this.reports.push(report);
                 this.save();
-                this.showToast("✅ Reporte multiformato enviado.", "success");
+                this.showToast("✅ Reporte enviado con éxito", "success");
                 
                 // Limpiar todo
                 form.reset();
@@ -587,6 +571,11 @@ class CiudadActivaApp {
                 this.renderCitizenList();
                 this.mostrar('mapa');
                 
+                if (this.device === 'mobile') {
+                    const sheet = document.getElementById('bottom-sheet');
+                    if (sheet) sheet.classList.remove('open');
+                }
+
                 setTimeout(() => {
                     this.map.setView(report.pos, 16);
                     const newMarker = this.markers.find(m => m.reportId === report.id);
@@ -595,18 +584,78 @@ class CiudadActivaApp {
             });
         }
     }
+
+    renderCitizenList() {
+        const lista = document.getElementById('lista');
+        const mobileLista = document.getElementById('mobile-lista-reportes');
+        
+        let html = '';
+        const myReports = this.reports.filter(r => r.email === this.user.email);
+        
+        if (myReports.length === 0) {
+            html = '<p style="text-align:center; color:var(--gray-600); padding:20px;">No has realizado reportes aún.</p>';
+        }
+
+        [...myReports].reverse().forEach(r => {
+            const statusCol = this.getCol(r);
+            const canFeedback = r.estado === 'Solucionado' && !r.feedback;
+            
+            let feedbackHtml = '';
+            if (canFeedback) {
+                feedbackHtml = `
+                    <div class="feedback-container" id="feedback-${r.id}">
+                        <div class="feedback-header">
+                            <i class="fa-solid fa-heart-pulse"></i> ¡Ayudanos a mejorar!
+                        </div>
+                        <div class="stars-rating" id="stars-${r.id}">
+                            <button onclick="app.setRating(${r.id}, 1)" class="star-btn">⭐</button>
+                            <button onclick="app.setRating(${r.id}, 2)" class="star-btn">⭐</button>
+                            <button onclick="app.setRating(${r.id}, 3)" class="star-btn">⭐</button>
+                            <button onclick="app.setRating(${r.id}, 4)" class="star-btn">⭐</button>
+                            <button onclick="app.setRating(${r.id}, 5)" class="star-btn">⭐</button>
+                        </div>
+                        <textarea class="feedback-input" id="feedback-msg-${r.id}" placeholder="Escribí un agradecimiento u opinión..."></textarea>
+                        <button class="btn-feedback-send" onclick="app.enviarFeedback(${r.id})">Enviar Feedback</button>
+                    </div>
+                `;
+            } else if (r.feedback) {
+                feedbackHtml = `
+                    <div style="margin-top:10px; font-size:0.8rem; color:#057642; background:#ecfdf5; padding:8px; border-radius:8px;">
+                        <b>Mi feedback:</b> ${"⭐".repeat(r.feedback.calificacion)} <br> "${r.feedback.comentario}"
+                    </div>
+                `;
+            }
+
+            let chatHtml = `
+                <div class="chat-container" id="chat-container-${r.id}" style="display:none;">
+                    <div class="chat-box" id="chat-box-${r.id}">
+                        ${(r.mensajes || []).map(m => `
+                            <div class="msg-bubble ${m.autor === 'funcionario' ? 'msg-admin' : 'msg-user'}">
+                                ${m.texto} <br> <small style="opacity:0.7; font-size:0.6rem;">${m.fecha}</small>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="chat-input-group">
+                        <input type="text" class="chat-input" id="chat-input-${r.id}" placeholder="Responder...">
+                        <button class="btn-chat-send" onclick="app.enviarMensaje(${r.id}, 'ciudadano')"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
                 </div>
+                <button onclick="app.toggleChat(${r.id})" style="margin-top:8px; width:100%; padding:8px; background:white; color:var(--gray-600); border:1px solid #ddd; border-radius:8px; font-size:0.75rem; cursor:pointer;">
+                    <i class="fa-solid fa-comments"></i> Mensajes (${(r.mensajes || []).length})
+                </button>
             `;
 
             html += `
-                <div class="card mini-card" style="border-left: 4px solid ${this.getCol(r)}; margin-bottom:15px; padding:15px;">
+                <div class="mobile-report-card" style="border-left: 5px solid ${statusCol};">
                     <div onclick="app.verEnMapa(${r.id})" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <b style="font-size:0.95rem;">${r.cat}</b> <br>
-                            <span class="badge" style="background:${this.getCol(r)}; color:white; font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800;">${r.estado.toUpperCase()}</span>
+                            <b style="font-size:1rem;">${r.cat}</b> <br>
+                            <span style="background:${statusCol}; color:white; font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800; text-transform:uppercase;">${r.estado}</span>
+                            <small style="color:var(--gray-600); margin-left:8px;">${r.fecha}</small>
                         </div>
                         <i class="fa-solid fa-chevron-right" style="color:#ccc;"></i>
                     </div>
+                    <p style="margin:10px 0; font-size:0.9rem; color:var(--gray-600);">${r.desc}</p>
                     ${feedbackHtml}
                     ${chatHtml}
                 </div>
@@ -614,28 +663,51 @@ class CiudadActivaApp {
         });
 
         if (lista) lista.innerHTML = html;
-        const mobileLista = document.getElementById('mobile-lista-reportes');
         if (mobileLista) mobileLista.innerHTML = html;
+        
+        // Actualizar contador de impacto en móvil
+        const impactElem = document.getElementById('mobile-resolved-count');
+        if (impactElem) {
+            const resolved = myReports.filter(r => r.estado === 'Solucionado').length;
+            impactElem.innerText = resolved;
+        }
     }
-
+    renderAdminList() {
+        const lista = document.getElementById('lista-admin');
+        if (!lista) return;
+        
+        let html = '';
+        [...this.reports].reverse().forEach(r => {
+            const statusCol = this.getCol(r);
+            html += `
+                <div class="card mini-card" style="border-left: 4px solid ${statusCol}; margin-bottom:15px; padding:15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
+                        <div>
+                            <b style="font-size:1.1rem;">${r.cat}</b> <br>
+                            <span class="badge" style="background:${statusCol}; color:white;">${r.estado}</span>
+                        </div>
+                        <button onclick="app.verEnMapa(${r.id})" class="btn-chat-send" style="width:30px; height:30px;"><i class="fa-solid fa-location-dot"></i></button>
+                    </div>
+                    <p style="font-size:0.9rem; margin-bottom:10px;">${r.desc}</p>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <select onchange="app.cambiarEstado(${r.id}, this.value)" style="flex:1; font-size:0.8rem; padding:5px;">
+                            <option ${r.estado === 'Recibido' ? 'selected' : ''}>Recibido</option>
+                            <option ${r.estado === 'En proceso' ? 'selected' : ''}>En proceso</option>
+                            <option ${r.estado === 'En revisión' ? 'selected' : ''}>En revisión</option>
+                            <option ${r.estado === 'Solucionado' ? 'selected' : ''}>Solucionado</option>
+                        </select>
+                        <select onchange="app.cambiarArea(${r.id}, this.value)" style="flex:1; font-size:0.8rem; padding:5px;">
+                            <option value="">Asignar Área</option>
+                            <option value="Vialidad" ${r.area === 'Vialidad' ? 'selected' : ''}>Vialidad</option>
+                            <option value="Iluminación" ${r.area === 'Iluminación' ? 'selected' : ''}>Iluminación</option>
+                            <option value="Higiene Urbana" ${r.area === 'Higiene Urbana' ? 'selected' : ''}>Higiene Urbana</option>
+                        </select>
+                    </div>
                 </div>
             `;
         });
-
-        if (lista) lista.innerHTML = html;
+        lista.innerHTML = html;
         this.renderStats();
-
-        const mobileAdminLista = document.getElementById('mobile-lista-admin');
-        if (mobileAdminLista) mobileAdminLista.innerHTML = html;
-
-        const mobileStats = document.getElementById('mobile-stats-content');
-        if (mobileStats && mobileStats.innerHTML === '') {
-            const statsGrid = document.querySelector('.stats-grid');
-            if (statsGrid) {
-                const clone = statsGrid.cloneNode(true);
-                mobileStats.appendChild(clone);
-            }
-        }
     }
     verEnMapa(id) {
         const r = this.reports.find(x => x.id == id);
@@ -1666,12 +1738,25 @@ class CiudadActivaApp {
             this.startTimer();
             
             const statusDiv = document.getElementById('audio-record-status');
+            const mobileBtn = document.getElementById('mobile-audio-btn');
+            const mobileStatus = document.getElementById('mobile-audio-status');
+
             if (statusDiv) {
                 statusDiv.classList.add('recording');
                 document.getElementById('audio-status-text').innerText = "Grabando audio...";
                 document.getElementById('btn-grabar').disabled = true;
                 document.getElementById('btn-detener').disabled = false;
             }
+
+            if (mobileBtn) {
+                mobileBtn.classList.add('recording');
+                mobileBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+                if (mobileStatus) {
+                    mobileStatus.innerText = "Grabando...";
+                    mobileStatus.classList.add('show');
+                }
+            }
+            this.recording = true;
             this.showToast("🎙️ Grabando...", "info");
         } catch (err) {
             console.error("Error al acceder al micrófono:", err);
@@ -1686,12 +1771,25 @@ class CiudadActivaApp {
             this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
             
             const statusDiv = document.getElementById('audio-record-status');
+            const mobileBtn = document.getElementById('mobile-audio-btn');
+            const mobileStatus = document.getElementById('mobile-audio-status');
+
             if (statusDiv) {
                 statusDiv.classList.remove('recording');
                 document.getElementById('audio-status-text').innerText = "Grabación finalizada";
                 document.getElementById('btn-grabar').disabled = false;
                 document.getElementById('btn-detener').disabled = true;
             }
+
+            if (mobileBtn) {
+                mobileBtn.classList.remove('recording');
+                mobileBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                if (mobileStatus) {
+                    mobileStatus.innerText = "Audio guardado";
+                    setTimeout(() => mobileStatus.classList.remove('show'), 2000);
+                }
+            }
+            this.recording = false;
         }
     }
 
