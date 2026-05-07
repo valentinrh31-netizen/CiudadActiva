@@ -22,7 +22,10 @@
                     <rect width="60" height="60" rx="8" fill="#e6192b"/>
                     <polygon points="10,50 30,10 50,50" fill="white"/>
                 </svg>
-                <span id="mobile-header-title">CIUDAD ACTIVA</span>
+                <div class="mobile-header-titles">
+                    <span class="mobile-header-gov">GOBIERNO DE LA RIOJA</span>
+                    <span id="mobile-header-title" class="mobile-header-section">CIUDAD ACTIVA</span>
+                </div>
             </div>
             <button class="mobile-menu-btn" onclick="app.toggleMobileMenu()">
                 <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -277,17 +280,40 @@
                 </div>
             </div>
 
-            <!-- Vista Transporte Inteligente -->
             <div id="transporteView" class="view-container">
-                <div class="view-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <h1>Transporte Inteligente</h1>
-                        <p>Movilidad urbana en tiempo real</p>
-                    </div>
+                <div class="view-header">
+                    <h1>Transporte Inteligente</h1>
+                    <p>Movilidad urbana en tiempo real</p>
                 </div>
                 
                 <div class="transporte-layout">
-                    <!-- Panel Izquierdo -->
+                    <!-- Mapa Principal -->
+                    <div class="transporte-map-container card" style="padding:0; position:relative; overflow:hidden;">
+                        <div id="transporte-map" style="width:100%; height:100%; min-height:260px;"></div>
+                        
+                        <!-- Tarjeta ETA Flotante (Oculta por defecto) -->
+                        <div id="transporte-eta-card" class="eta-floating-card">
+                            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+                                <div>
+                                    <h3 id="eta-parada-nombre" style="margin:0; font-size:1.1rem;">Parada Plaza Principal</h3>
+                                    <p id="eta-linea-nombre" style="margin:0; font-size:0.85rem; color:var(--gray-600);">Línea Troncal Norte-Sur</p>
+                                </div>
+                                <button onclick="app.cerrarEtaCard()" style="background:none; border:none; color:var(--gray-600); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <div style="background:var(--primary); color:white; width:60px; height:60px; border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                    <span id="eta-minutos" style="font-size:1.8rem; font-weight:800; line-height:1;">--</span>
+                                    <span style="font-size:0.6rem; text-transform:uppercase; font-weight:bold;">MIN</span>
+                                </div>
+                                <div>
+                                    <p style="margin:0; font-weight:bold;">Próximo Colectivo</p>
+                                    <p id="eta-distancia" style="margin:0; font-size:0.85rem; color:var(--gray-600);">Calculando...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel de Paradas -->
                     <div class="transporte-sidebar card">
                         <div class="input-group">
                             <label>¿A dónde vas?</label>
@@ -312,82 +338,54 @@
                             <!-- Dinámico -->
                         </div>
                     </div>
-
-                    <!-- Mapa Principal -->
-                    <div class="transporte-map-container card" style="padding:0; position:relative; overflow:hidden;">
-                        <div id="transporte-map" style="width:100%; height:100%; min-height:60vh;"></div>
-                        
-                        <!-- Tarjeta ETA Flotante (Oculta por defecto) -->
-                        <div id="transporte-eta-card" class="eta-floating-card">
-                            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
-                                <div>
-                                    <h3 id="eta-parada-nombre" style="margin:0; font-size:1.1rem;">Parada Plaza Principal</h3>
-                                    <p id="eta-linea-nombre" style="margin:0; font-size:0.85rem; color:var(--gray-600);">Línea Troncal Norte-Sur</p>
-                                </div>
-                                <button onclick="app.cerrarEtaCard()" style="background:none; border:none; color:var(--gray-600); font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:15px;">
-                                <div style="background:var(--primary); color:white; width:60px; height:60px; border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                                    <span id="eta-minutos" style="font-size:1.8rem; font-weight:800; line-height:1;">--</span>
-                                    <span style="font-size:0.6rem; text-transform:uppercase; font-weight:bold;">MIN</span>
-                                </div>
-                                <div>
-                                    <p style="margin:0; font-weight:bold;">Próximo Colectivo</p>
-                                    <p id="eta-distancia" style="margin:0; font-size:0.85rem; color:var(--gray-600);">Calculando...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            <!-- Vista Alertas de Servicios Públicos -->
             <div id="serviciosView" class="view-container">
-                <div class="view-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <h1>Servicios Públicos</h1>
-                        <p>Estado de suministro y alertas en tiempo real</p>
-                    </div>
-                    <button onclick="app.abrirModalReporteServicio()" class="btn-secondary" style="width:auto; padding:10px 20px; border-color:var(--danger); color:var(--danger);">
-                        <i class="fa-solid fa-bullhorn"></i> Reportar Falla
-                    </button>
+                <div class="view-header">
+                    <h1>Servicios Públicos</h1>
+                    <p>Estado de suministro y alertas en tiempo real</p>
                 </div>
+
+                <button onclick="app.abrirModalReporteServicio()" class="btn-secondary" style="width:100%; margin-bottom:16px; border-color:var(--danger); color:var(--danger);">
+                    <i class="fa-solid fa-bullhorn"></i> Reportar Falla de Servicio
+                </button>
                 
-                <!-- Resumen Superior -->
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:20px;">
-                    <div class="card status-ok" style="display:flex; align-items:center; gap:15px; padding:15px; border-left:4px solid var(--success);">
-                        <i class="fa-solid fa-bolt" style="font-size:2rem; color:var(--success);"></i>
+                <!-- Resumen de estados -->
+                <div class="servicios-status-grid">
+                    <div class="card status-ok" style="display:flex; align-items:center; gap:12px; padding:12px; border-left:4px solid var(--success);">
+                        <i class="fa-solid fa-bolt" style="font-size:1.5rem; color:var(--success);"></i>
                         <div>
-                            <h3 style="margin:0; font-size:1rem;">Energía (Edelar)</h3>
-                            <p style="margin:0; font-size:0.85rem; color:var(--gray-600);">Servicio Normal</p>
+                            <h3 style="margin:0; font-size:0.9rem;">Energía (Edelar)</h3>
+                            <p style="margin:0; font-size:0.78rem; color:var(--gray-600);">Servicio Normal</p>
                         </div>
                     </div>
-                    <div class="card status-danger" style="display:flex; align-items:center; gap:15px; padding:15px; border-left:4px solid var(--danger);">
-                        <i class="fa-solid fa-droplet" style="font-size:2rem; color:var(--danger);"></i>
+                    <div class="card status-danger" style="display:flex; align-items:center; gap:12px; padding:12px; border-left:4px solid var(--danger);">
+                        <i class="fa-solid fa-droplet" style="font-size:1.5rem; color:var(--danger);"></i>
                         <div>
-                            <h3 style="margin:0; font-size:1rem;">Agua (Aguas Riojanas)</h3>
-                            <p style="margin:0; font-size:0.85rem; color:var(--danger); font-weight:bold;">Interrupciones Activas</p>
+                            <h3 style="margin:0; font-size:0.9rem;">Agua (Aguas Riojanas)</h3>
+                            <p style="margin:0; font-size:0.78rem; color:var(--danger); font-weight:bold;">Interrupciones Activas</p>
                         </div>
                     </div>
-                    <div class="card status-warning" style="display:flex; align-items:center; gap:15px; padding:15px; border-left:4px solid var(--warning);">
-                        <i class="fa-solid fa-fire-flame-simple" style="font-size:2rem; color:var(--warning);"></i>
+                    <div class="card status-warning" style="display:flex; align-items:center; gap:12px; padding:12px; border-left:4px solid var(--warning);">
+                        <i class="fa-solid fa-fire-flame-simple" style="font-size:1.5rem; color:var(--warning);"></i>
                         <div>
-                            <h3 style="margin:0; font-size:1rem;">Gas Natural</h3>
-                            <p style="margin:0; font-size:0.85rem; color:var(--warning); font-weight:bold;">Mantenimiento</p>
+                            <h3 style="margin:0; font-size:0.9rem;">Gas Natural</h3>
+                            <p style="margin:0; font-size:0.78rem; color:var(--warning); font-weight:bold;">Mantenimiento</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="servicios-layout" style="display:grid; grid-template-columns: 1fr 350px; gap:20px;">
-                    <!-- Mapa de Incidencias -->
-                    <div class="card map-box" style="padding:0; height: 50vh; overflow:hidden;" id="servicios-map"></div>
-                    
-                    <!-- Panel Lateral de Alertas -->
-                    <div class="card list-card" style="overflow-y: auto; height: 50vh; padding: 20px;">
-                        <h3 style="margin-bottom: 15px;">Alertas Activas</h3>
-                        <div id="servicios-lista-alertas" style="display:flex; flex-direction:column; gap:15px;">
-                            <!-- Dinámico -->
-                        </div>
+                <!-- Mapa de incidencias -->
+                <div class="card" style="padding:0; overflow:hidden; border-radius:14px; margin-top:16px;">
+                    <div id="servicios-map" class="map-box" style="height:260px; border-radius:14px;"></div>
+                </div>
+
+                <!-- Lista de alertas por zona -->
+                <div class="card" style="margin-top:14px; padding:16px;">
+                    <h3 style="margin-bottom:12px; font-size:1rem;"><i class="fa-solid fa-map-marker-alt" style="color:var(--danger);"></i> Zonas y Barrios Afectados</h3>
+                    <div id="servicios-lista-alertas" style="display:flex; flex-direction:column; gap:12px;">
+                        <!-- Dinámico -->
                     </div>
                 </div>
             </div>

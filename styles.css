@@ -198,14 +198,37 @@ body.mobile-mode .mobile-header {
     display: flex;
     align-items: center;
     gap: 9px;
-    font-weight: 900;
-    color: var(--primary);
-    font-size: 0.95rem;
-    letter-spacing: 0.03em;
     min-width: 0;
     overflow: hidden;
+    flex: 1;
+}
+
+.mobile-header-titles {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.mobile-header-gov {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.mobile-header-section {
+    font-size: 0.92rem;
+    font-weight: 900;
+    color: var(--primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.03em;
 }
 
 .mobile-menu-btn {
@@ -1999,9 +2022,9 @@ body.mobile-mode .sos-fab { display: none !important; }
 
 /* ─── MAPA EN MOBILE ─── */
 body.mobile-mode .map-box {
-    height: 58vw;
-    min-height: 220px;
-    max-height: 340px;
+    height: 72vw;
+    min-height: 260px;
+    max-height: 400px;
     border-radius: 16px;
     overflow: hidden;
 }
@@ -2010,6 +2033,67 @@ body.mobile-mode #mapaView {
     position: static !important;
     width: 100% !important;
     height: auto !important;
+}
+
+/* ─── SERVICIOS PÚBLICOS: GRID DE ESTADO ─── */
+.servicios-status-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+/* ─── TRANSPORTE: LAYOUT VERTICAL EN MOBILE ─── */
+body.mobile-mode .transporte-layout {
+    flex-direction: column !important;
+    gap: 14px;
+}
+
+body.mobile-mode .transporte-map-container {
+    height: 260px !important;
+    min-height: 260px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+body.mobile-mode #transporte-map {
+    height: 260px !important;
+}
+
+body.mobile-mode .transporte-sidebar {
+    width: 100% !important;
+    max-height: none;
+    overflow-y: visible;
+}
+
+/* ─── OBRAS: VERTICAL EN MOBILE ─── */
+body.mobile-mode .obras-grid {
+    grid-template-columns: 1fr !important;
+}
+
+body.mobile-mode #obras-map {
+    height: 240px !important;
+}
+
+/* ─── SERVICIOS: MAPA Y LISTA VERTICAL ─── */
+body.mobile-mode .servicios-layout {
+    grid-template-columns: 1fr !important;
+}
+
+body.mobile-mode #servicios-map {
+    height: 240px !important;
+    border-radius: 14px;
+}
+
+/* ─── EMERGENCIAS: VERTICAL ─── */
+body.mobile-mode .emerg-body {
+    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px;
+}
+
+body.mobile-mode #emergencias-map {
+    height: 240px !important;
 }
 
 /* ─── BOTONES TÁCTILES GRANDES ─── */
