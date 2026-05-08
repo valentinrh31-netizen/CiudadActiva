@@ -364,22 +364,19 @@ class CiudadActivaApp {
     }
 
     getReportIcon(r) {
-        // Rutas de las imágenes proporcionadas por el usuario
-        const icons = {
-            grave: 'assets/grave.png',
-            intermedio: 'assets/intermedio.png',
-            solucionado: 'assets/solucionado.png',
-            revision: 'assets/revision.png',
-            proceso: 'assets/proceso.png'
-        };
+        if (r.estado === 'Solucionado') return '✅';
+        if (r.estado === 'En proceso') return '⚙️';
+        if (r.estado === 'En revisión') return '🔎';
+        if (r.urgency === 'Alto') return '🚨';
+        return '🟡';
+    }
 
-        if (r.estado === 'Solucionado') return icons.solucionado;
-        if (r.estado === 'En proceso') return icons.proceso;
-        if (r.estado === 'En revisión') return icons.revision;
-        
-        // Si el estado es "Recibido", usamos la urgencia
-        if (r.urgency === 'Alto') return icons.grave;
-        return icons.intermedio; // Medio o Bajo
+    getReportEmoji(r) {
+        if (r.estado === 'Solucionado') return '✅🎉';
+        if (r.estado === 'En proceso') return '⚙️⚙️';
+        if (r.estado === 'En revisión') return '🔎📋';
+        if (r.urgency === 'Alto') return '🚨';
+        return '🟡';
     }
 
     getCatIcon(cat) {
@@ -418,23 +415,29 @@ class CiudadActivaApp {
 
         this.reports.forEach(r => {
             if (!r.pos || !Array.isArray(r.pos) || r.pos.length < 2) return;
-            if (r.estado === 'Solucionado' && r.fechaSolucion && (Date.now() - r.fechaSolucion > 60000)) return;
+            // Desaparecer después de 20 segundos si está solucionado
+            if (r.estado === 'Solucionado' && r.fechaSolucion && (Date.now() - r.fechaSolucion > 20000)) return;
             
             try {
-                const iconUrl = this.getReportIcon(r);
+                const emoji = this.getReportIcon(r);
                 const col = this.getCol(r);
                 const catIcon = this.getCatIcon(r.cat);
+                const isUrgent = r.urgency === 'Alto' && r.estado === 'Recibido';
+                const isProcess = r.estado === 'En proceso';
                 
+                const markerClass = isUrgent ? 'marker-urgente urgency-pulse' : 
+                                  (r.urgency === 'Medio' ? 'marker-intermedio' : '');
+
                 const customIcon = L.divIcon({
-                    html: `<div style="position:relative; width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
-                             <img src="${iconUrl}" style="width:100%; height:100%; object-fit:contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" onerror="this.src='https://cdn-icons-png.flaticon.com/512/595/595067.png'">
-                             <div style="position:absolute; bottom:0; right:0; background:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.3); border:1.5px solid ${col};">
-                                <i class="fa-solid ${catIcon}" style="color:${col}; font-size:0.7rem;"></i>
+                    html: `<div class="${markerClass}" style="position:relative; width:46px; height:46px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; background:white; border-radius:50%; box-shadow:0 3px 10px rgba(0,0,0,0.2);">
+                             <span class="${isProcess ? 'status-icon-rotating' : ''}">${emoji}</span>
+                             <div style="position:absolute; bottom:-2px; right:-2px; background:white; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.3); border:1.5px solid ${col}; z-index:10;">
+                                <i class="fa-solid ${catIcon}" style="color:${col}; font-size:0.6rem;"></i>
                              </div>
                            </div>`,
                     className: 'custom-report-icon',
-                    iconSize: [50, 50],
-                    iconAnchor: [25, 25],
+                    iconSize: [46, 46],
+                    iconAnchor: [23, 23],
                     popupAnchor: [0, -20]
                 });
 
@@ -675,14 +678,28 @@ class CiudadActivaApp {
         sortedReports.forEach(r => {
             const statusCol = this.getCol(r);
             const sugerencia = this.sugerirArea(r.desc);
+            const emojiEstado = this.getReportEmoji(r);
+            
+            // Determinar clases de tarjeta
+            let cardClasses = ['card', 'admin-card'];
+            if (r.urgency === 'Alto') cardClasses.push('urgent');
+            else if (r.urgency === 'Medio') cardClasses.push('medium');
+            if (r.estado === 'En proceso') cardClasses.push('process');
+            if (r.estado === 'Solucionado') cardClasses.push('solved');
+
+            const statusBadgeClass = r.estado === 'En revisión' ? 'sb-review' : 
+                                   (r.estado === 'En proceso' ? 'sb-process' : 'sb-solved');
             
             html += `
-                <div class="card admin-card" style="border-left: 5px solid ${statusCol};">
+                <div class="${cardClasses.join(' ')}">
                     <div class="admin-card-header">
                         <div>
                             <b style="font-size:1.1rem;">${r.cat}</b> <br>
-                            <span class="badge" style="background:${statusCol}; color:white; font-size:0.7rem; padding:2px 8px; border-radius:10px;">${r.estado}</span>
-                            <small style="color:var(--gray-600); margin-left:8px;"><i class="fa-solid fa-thumbs-up"></i> ${r.votos || 0} votos</small>
+                            <div class="status-badge-visual ${statusBadgeClass}">
+                                <span class="${r.estado === 'En proceso' ? 'status-icon-rotating' : ''}">${emojiEstado.split('')[0]}</span>
+                                <span>${r.estado}</span>
+                            </div>
+                            <small style="color:var(--gray-600); margin-left:2px;"><i class="fa-solid fa-thumbs-up"></i> ${r.votos || 0} vecinos</small>
                         </div>
                         <div style="display:flex; gap:8px;">
                             <button onclick="app.verEnMapa(${r.id})" class="btn-icon-circle" title="Ver en mapa"><i class="fa-solid fa-location-dot"></i></button>
@@ -692,6 +709,18 @@ class CiudadActivaApp {
 
                     <p style="font-size:0.95rem; margin:12px 0; color:var(--gray-800);">${r.desc}</p>
                     
+                    ${r.audio ? `
+                        <div style="background:#f8fafc; padding:10px; border-radius:10px; margin-bottom:12px; display:flex; align-items:center; gap:10px; border:1px solid #e2e8f0;">
+                            <div style="background:var(--primary); color:white; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                <i class="fa-solid fa-microphone"></i>
+                            </div>
+                            <div style="flex:1;">
+                                <p style="margin:0; font-size:0.75rem; font-weight:800; color:var(--gray-600);">REPORTE POR VOZ</p>
+                                <audio src="${r.audio}" controls style="width:100%; height:30px; margin-top:4px;"></audio>
+                            </div>
+                        </div>
+                    ` : ''}
+
                     ${r.photo ? `<img src="${r.photo}" style="width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:12px;">` : ''}
 
                     <div class="admin-controls-grid">
@@ -699,8 +728,8 @@ class CiudadActivaApp {
                             <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--gray-600);">Estado</label>
                             <select onchange="app.cambiarEstado(${r.id}, this.value)" style="width:100%; padding:8px; border-radius:8px; font-size:0.85rem;">
                                 <option value="Recibido" ${r.estado === 'Recibido' ? 'selected' : ''}>Recibido</option>
-                                <option value="En proceso" ${r.estado === 'En proceso' ? 'selected' : ''}>En proceso</option>
                                 <option value="En revisión" ${r.estado === 'En revisión' ? 'selected' : ''}>En revisión</option>
+                                <option value="En proceso" ${r.estado === 'En proceso' ? 'selected' : ''}>En proceso</option>
                                 <option value="Solucionado" ${r.estado === 'Solucionado' ? 'selected' : ''}>Solucionado</option>
                             </select>
                         </div>
@@ -720,7 +749,6 @@ class CiudadActivaApp {
                     <div class="quick-responses">
                         <small style="display:block; width:100%; margin-bottom:5px; font-weight:700; color:var(--gray-600); font-size:0.7rem;">RESPUESTAS RÁPIDAS:</small>
                         <button onclick="app.enviarRespuestaRapida(${r.id}, 'Cuadrilla asignada para inspección.')">Inspección</button>
-                        <button onclick="app.enviarRespuestaRapida(${r.id}, 'Repuesto solicitado al almacén central.')">Repuesto</button>
                         <button onclick="app.enviarRespuestaRapida(${r.id}, 'Estamos trabajando para solucionarlo lo antes posible.')">Trabajando</button>
                     </div>
 
@@ -818,6 +846,11 @@ class CiudadActivaApp {
         r.respuestaOficial = document.getElementById('res-comentario').value;
         r.photoResolucion = photoBase64;
         
+        // Programar desaparición del mapa en 20 segundos
+        setTimeout(() => {
+            this.renderMarkers();
+        }, 20500);
+
         // Notificar al vecino (simulado)
         let notifs = JSON.parse(localStorage.getItem('ca_notifications')) || [];
         notifs.push({ user: r.name, msg: `¡Tu reporte de ${r.cat} ha sido SOLUCIONADO! 🎉 Mira la foto en Mis Reportes.` });
