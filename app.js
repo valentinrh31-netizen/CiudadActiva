@@ -417,20 +417,14 @@ class CiudadActivaApp {
         }
 
         this.reports.forEach(r => {
-            // Validaciones básicas
             if (!r.pos || !Array.isArray(r.pos) || r.pos.length < 2) return;
-            
-            // Si está solucionado y pasó más de 1 minuto, ocultar
-            if (r.estado === 'Solucionado' && r.fechaSolucion && (Date.now() - r.fechaSolucion > 60000)) {
-                return;
-            }
+            if (r.estado === 'Solucionado' && r.fechaSolucion && (Date.now() - r.fechaSolucion > 60000)) return;
             
             try {
                 const iconUrl = this.getReportIcon(r);
                 const col = this.getCol(r);
                 const catIcon = this.getCatIcon(r.cat);
                 
-                // Logo de estado con una insignia (badge) de la categoría en la esquina
                 const customIcon = L.divIcon({
                     html: `<div style="position:relative; width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
                              <img src="${iconUrl}" style="width:100%; height:100%; object-fit:contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" onerror="this.src='https://cdn-icons-png.flaticon.com/512/595/595067.png'">
@@ -445,30 +439,38 @@ class CiudadActivaApp {
                 });
 
                 const m = L.marker(r.pos, { icon: customIcon }).addTo(this.map);
+                const isOwn = this.user && r.email === this.user.email;
+                const comentariosHtml = (r.comentarios || []).map(c => 
+                    `<div style="font-size:0.75rem;padding:4px 0;border-bottom:1px solid #f0f0f0;"><b style="color:var(--primary)">${c.usuario}:</b> ${c.texto}</div>`
+                ).join('');
+
+                let popupContent = `<div style="font-family:'Inter',sans-serif;min-width:220px;padding:5px;">
+                    <div style="background:${col};color:white;padding:8px;border-radius:5px;margin-bottom:10px;text-align:center;font-weight:bold;text-transform:uppercase;">${r.cat}</div>
+                    <p style="margin:5px 0 4px;font-size:0.95rem;"><b>Problema:</b> ${r.desc}</p>
+                    <p style="margin:0 0 4px;font-size:0.78rem;color:#666;"><i class="fa-solid fa-user"></i> ${r.name} &nbsp;|&nbsp; <i class="fa-solid fa-thumbs-up"></i> ${r.votos||0} vecinos</p>`;
                 
-                let popupContent = `
-                    <div style="font-family: 'Inter', sans-serif; min-width:200px; padding: 5px;">
-                        <div style="background:${col}; color:white; padding:8px; border-radius:5px; margin-bottom:10px; text-align:center; font-weight:bold; text-transform:uppercase;">
-                            ${r.cat}
-                        </div>
-                        <p style="margin:5px 0 10px 0; font-size:0.95rem;"><b>Problema:</b> ${r.desc}</p>
-                        <p style="margin:0 0 5px 0; font-size:0.8rem; color:#666;"><i class="fa-solid fa-user"></i> Reportado por: ${r.name}</p>
-                `;
-                
-                if (r.photo) {
-                    popupContent += `<img src="${r.photo}" style="width:100%; height:130px; object-fit:cover; margin-top:5px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd;">`;
-                }
+                if (r.photo) popupContent += `<img src="${r.photo}" style="width:100%;height:120px;object-fit:cover;border-radius:5px;margin:6px 0;">`;
                 
                 if (r.estado === 'Solucionado') {
-                    popupContent += `<div style="margin-top:10px; width:100%; padding:10px; background:#057642; color:white; border-radius:5px; text-align:center; font-weight:800;">✅ Problema Resuelto</div>`;
-                } else if (this.user && (this.user.role === 'ciudadano' || this.user.rol === 'ciudadano') && r.name !== this.user.name) {
-                    popupContent += `<button onclick="app.votar(${r.id})" style="margin-top:10px; width:100%; padding:10px; background:var(--primary); color:white; border:none; border-radius:5px; cursor:pointer; font-weight:800; box-shadow:0 4px 10px rgba(230,25,43,0.3);">👍 Confirmar (${r.votos || 0})</button>`;
+                    popupContent += `<div style="margin-top:8px;padding:8px;background:#057642;color:white;border-radius:5px;text-align:center;font-weight:800;">✅ Problema Resuelto</div>`;
+                    if (r.photoResolucion) popupContent += `<img src="${r.photoResolucion}" style="width:100%;height:100px;object-fit:cover;border-radius:5px;margin-top:6px;"><p style="font-size:0.7rem;text-align:center;color:#666;">Foto de resolución</p>`;
+                } else if (!isOwn) {
+                    popupContent += `<button onclick="app.votar(${r.id})" style="margin-top:8px;width:100%;padding:9px;background:var(--primary);color:white;border:none;border-radius:7px;cursor:pointer;font-weight:800;font-size:0.85rem;">📍 También me afecta (${r.votos||0})</button>`;
                 } else {
-                    popupContent += `<p style="margin:10px 0 0 0; font-size:0.85rem; font-weight:bold; color:var(--primary);">Confirmaciones: ${r.votos || 0}</p>`;
+                    popupContent += `<p style="margin:8px 0 0;font-size:0.82rem;font-weight:bold;color:var(--primary);">👥 Vecinos que apoyan: ${r.votos||0}</p>`;
                 }
+
+                // Sección de comentarios
+                popupContent += `<div style="margin-top:10px;">
+                    <div style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Comentarios (${(r.comentarios||[]).length})</div>
+                    <div style="max-height:80px;overflow-y:auto;margin-bottom:6px;">${comentariosHtml || '<span style="font-size:0.75rem;color:#aaa;">Sin comentarios aún.</span>'}</div>
+                    <div style="display:flex;gap:5px;">
+                        <input id="comentario-input-${r.id}" type="text" placeholder="Agregar comentario..." style="flex:1;font-size:0.8rem;padding:5px 8px;border:1px solid #ddd;border-radius:6px;">
+                        <button onclick="app.comentarReporte(${r.id})" style="background:var(--primary);color:white;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:0.8rem;"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div></div>`;
                 
-                popupContent += `</div>`;
-                m.bindPopup(popupContent, { minWidth: 220 });
+                m.bindPopup(popupContent, { minWidth: 240, maxHeight: 400 });
                 m.reportId = r.id;
                 this.markers.push(m);
             } catch(err) {
@@ -836,6 +838,8 @@ class CiudadActivaApp {
         if (vista === 'transporte') setTimeout(() => { this.initTransporteMap(); }, 200);
         if (vista === 'servicios') setTimeout(() => { this.initServiciosMap(); }, 200);
         if (vista === 'emergencias') setTimeout(() => { this.initEmergenciasMap(); }, 200);
+        if (vista === 'misreportes') setTimeout(() => { this.renderMisReportes(); }, 100);
+        if (vista === 'tramites') setTimeout(() => { this.initTramites(); }, 100);
         this.cerrarMenuMobile();
     }
     cerrarMenuMobile() {
@@ -1913,6 +1917,245 @@ class CiudadActivaApp {
                 this.renderCitizenList();
             }
         }
+    }
+
+    // ============================================================
+    // MIS REPORTES — Seguimiento personal
+    // ============================================================
+    renderMisReportes() {
+        const lista = document.getElementById('misreportes-lista');
+        if (!lista) return;
+
+        const myReports = [...this.reports].filter(r => r.email === this.user.email).reverse();
+        const resueltos = myReports.filter(r => r.estado === 'Solucionado').length;
+
+        // Stats
+        const t = document.getElementById('misrep-total');
+        const res = document.getElementById('misrep-resueltos');
+        const pend = document.getElementById('misrep-pendientes');
+        if (t) t.textContent = myReports.length;
+        if (res) res.textContent = resueltos;
+        if (pend) pend.textContent = myReports.length - resueltos;
+
+        if (myReports.length === 0) {
+            lista.innerHTML = `<div class="card" style="text-align:center;padding:30px;color:var(--gray-600);">
+                <i class="fa-solid fa-clipboard-list" style="font-size:2.5rem;margin-bottom:12px;opacity:0.3;"></i>
+                <p>Aún no enviaste reportes.<br>Usá el mapa para crear tu primero.</p>
+                <button onclick="app.mostrar('mapa')" class="btn-primary" style="margin-top:14px;width:auto;padding:10px 20px;">
+                    <i class="fa-solid fa-map"></i> Ir al mapa
+                </button>
+            </div>`;
+            return;
+        }
+
+        const estados = ['Recibido', 'En Inspección', 'Solucionando', 'Solucionado'];
+        const estadoCols = { 'Recibido': '#f59e0b', 'En Inspección': '#6366f1', 'Solucionando': '#0a66c2', 'Solucionado': '#057642' };
+
+        lista.innerHTML = myReports.map(r => {
+            const col = estadoCols[r.estado] || '#f59e0b';
+            // Normalizar estado para el index de timeline
+            let estadoIdx = estados.findIndex(e => e === r.estado);
+            if (estadoIdx === -1) {
+                if (r.estado === 'En proceso') estadoIdx = 2;
+                else if (r.estado === 'En revisión') estadoIdx = 1;
+                else estadoIdx = 0;
+            }
+
+            const timelineHtml = estados.map((e, i) => `
+                <div class="timeline-step ${i <= estadoIdx ? 'done' : ''} ${i === estadoIdx ? 'current' : ''}">
+                    <div class="timeline-dot"></div>
+                    <span>${e}</span>
+                </div>
+            `).join('');
+
+            const audioHtml = r.audio ? `
+                <div style="margin:10px 0;">
+                    <p style="font-size:0.78rem;color:var(--gray-600);margin-bottom:4px;"><i class="fa-solid fa-microphone"></i> Reporte de voz:</p>
+                    <audio controls src="${r.audio}" style="width:100%;border-radius:8px;"></audio>
+                </div>` : '';
+
+            const photoHtml = r.photo ? `
+                <img src="${r.photo}" style="width:100%;max-height:150px;object-fit:cover;border-radius:10px;margin:8px 0;">` : '';
+
+            const photoResHtml = r.photoResolucion ? `
+                <div style="margin-top:8px;padding:10px;background:#ecfdf5;border-radius:10px;">
+                    <p style="font-size:0.78rem;font-weight:700;color:#057642;margin-bottom:4px;"><i class="fa-solid fa-camera"></i> Foto de resolución:</p>
+                    <img src="${r.photoResolucion}" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;">
+                </div>` : '';
+
+            const respOficialHtml = r.respuestaOficial ? `
+                <div style="margin-top:10px;padding:10px;background:#eff6ff;border-left:3px solid #0a66c2;border-radius:0 8px 8px 0;">
+                    <p style="font-size:0.78rem;font-weight:700;color:#0a66c2;margin-bottom:3px;"><i class="fa-solid fa-shield-halved"></i> Respuesta oficial:</p>
+                    <p style="font-size:0.85rem;margin:0;">${r.respuestaOficial}</p>
+                </div>` : '';
+
+            const chatHtml = `
+                <div class="chat-container" id="chat-container-mr-${r.id}" style="display:none;margin-top:10px;">
+                    <div class="chat-box" id="chat-box-mr-${r.id}">
+                        ${(r.mensajes || []).map(m => `
+                            <div class="msg-bubble ${m.autor === 'funcionario' ? 'msg-admin' : 'msg-user'}">
+                                ${m.texto} <br><small style="opacity:0.7;font-size:0.6rem;">${m.fecha}</small>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="chat-input-group">
+                        <input type="text" class="chat-input" id="chat-input-mr-${r.id}" placeholder="Escribir mensaje...">
+                        <button class="btn-chat-send" onclick="app.enviarMensaje(${r.id}, 'ciudadano')"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+                <button onclick="app.toggleChat('mr-${r.id}')" style="margin-top:8px;width:100%;padding:8px;background:white;color:var(--gray-600);border:1px solid #ddd;border-radius:8px;font-size:0.75rem;cursor:pointer;">
+                    <i class="fa-solid fa-comments"></i> Mensajes con el gobierno (${(r.mensajes||[]).length})
+                </button>`;
+
+            return `<div class="card misrep-card" style="border-left:5px solid ${col};">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+                    <div>
+                        <b style="font-size:1rem;">${r.cat}</b><br>
+                        <span style="background:${col};color:white;font-size:0.65rem;padding:2px 9px;border-radius:10px;font-weight:800;">${r.estado}</span>
+                        <small style="color:var(--gray-600);margin-left:6px;">${r.fecha}</small>
+                    </div>
+                    <button onclick="app.verEnMapa(${r.id})" style="background:none;border:none;cursor:pointer;color:var(--primary);font-size:0.8rem;">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </button>
+                </div>
+                <p style="font-size:0.88rem;color:var(--gray-600);margin-bottom:10px;">${r.desc}</p>
+                ${photoHtml}
+                ${audioHtml}
+                <div class="report-timeline">${timelineHtml}</div>
+                ${respOficialHtml}
+                ${photoResHtml}
+                ${chatHtml}
+            </div>`;
+        }).join('');
+    }
+
+    comentarReporte(id) {
+        const input = document.getElementById(`comentario-input-${id}`);
+        if (!input || !input.value.trim()) return;
+        const r = this.reports.find(x => x.id == id);
+        if (!r) return;
+        if (!r.comentarios) r.comentarios = [];
+        r.comentarios.push({ usuario: this.user.name, texto: input.value.trim(), fecha: new Date().toLocaleDateString() });
+        this.save();
+        this.renderMarkers();
+        this.showToast('Comentario agregado', 'success');
+    }
+
+    toggleChat(id) {
+        const c = document.getElementById(`chat-container-${id}`);
+        if (c) c.style.display = c.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // ============================================================
+    // GUÍA DE TRÁMITES + BOT IA
+    // ============================================================
+    initTramites() {
+        this.tramitesData = [
+            { cat: 'Licencias', titulo: 'Licencia de conducir (1ª vez)', desc: 'Obtené tu licencia de conducir por primera vez.', pasos: 'Turno online → Examen médico → Examen teórico → Pago de tasa', link: 'https://www.larioja.gob.ar/transito', tiempo: '5-10 días' },
+            { cat: 'Licencias', titulo: 'Renovación de licencia', desc: 'Renová tu carnet vencido o próximo a vencer.', pasos: 'Turno online → Control de salud → Pago → Entrega', link: 'https://www.larioja.gob.ar/transito', tiempo: '1-2 días' },
+            { cat: 'Documentos', titulo: 'DNI (renovación)', desc: 'Renovación del Documento Nacional de Identidad.', pasos: 'Sacar turno en RENAPER → Presentarse con partida de nacimiento', link: 'https://www.renaper.gob.ar', tiempo: '15-30 días' },
+            { cat: 'Documentos', titulo: 'Partida de nacimiento', desc: 'Obtené tu partida de nacimiento digitalizada.', pasos: 'Registro Civil → Presentar DNI → Pagar arancel', link: 'https://www.larioja.gob.ar/registro-civil', tiempo: '3-5 días' },
+            { cat: 'Impuestos', titulo: 'Pago de impuesto automotor', desc: 'Abonás los impuestos de tu vehículo.', pasos: 'ARIOR en línea o sucursales habilitadas', link: 'https://www.arior.larioja.gob.ar', tiempo: 'Inmediato' },
+            { cat: 'Impuestos', titulo: 'Libre deuda municipal', desc: 'Certificado de libre deuda de tasas municipales.', pasos: 'Municipalidad Capital → Ventanilla de Catastro → DNI + Número de partida', link: 'https://www.larioja.gob.ar/municipalidad', tiempo: '1-2 días' },
+            { cat: 'Salud', titulo: 'Turno médico IPROSS', desc: 'Reservá un turno en el Instituto Provincial de Salud.', pasos: 'Llamar al 0800 / app IPROSS / Web → Confirmar credencial', link: 'https://www.ipross.gob.ar', tiempo: 'Inmediato' },
+            { cat: 'Salud', titulo: 'Vacunación gratuita', desc: 'Campaña de vacunación provincial gratuita.', pasos: 'Concurrir al CAPS de tu barrio con DNI y libreta sanitaria', link: 'https://salud.larioja.gob.ar', tiempo: 'Sin turno' },
+            { cat: 'Educación', titulo: 'Inscripción escolar', desc: 'Inscribí a tu hijo/a para el próximo ciclo lectivo.', pasos: 'Plataforma "Inscripción Digital" → DNI titular → DNI del menor + libreta', link: 'https://educacion.larioja.gob.ar', tiempo: 'Período dictado' },
+            { cat: 'Educación', titulo: 'Título secundario (copia)', desc: 'Solicitá una copia de tu título secundario.', pasos: 'DGED → Formulario de solicitud → DNI + arancel', link: 'https://educacion.larioja.gob.ar', tiempo: '10-15 días' },
+            { cat: 'Habilitaciones', titulo: 'Habilitación comercial', desc: 'Obtené el permiso para operar un local comercial.', pasos: 'Municipalidad → Planos aprobados → Bomberos → Habilitación final', link: 'https://www.larioja.gob.ar/comercio', tiempo: '30-60 días' },
+            { cat: 'Social', titulo: 'Asignación Familiar Provincial', desc: 'Asignación para familias de bajos recursos.', pasos: 'Ministerio de Desarrollo Social → DNI + CUIL + Certificado de ingresos', link: 'https://desarrollosocial.larioja.gob.ar', tiempo: '15-30 días' },
+            { cat: 'Otros', titulo: 'Habilitación de obra', desc: 'Permiso de construcción o refacción.', pasos: 'Municipalidad → Planos firmados por profesional → Pago de tasa', link: 'https://www.larioja.gob.ar/obras', tiempo: '30 días' },
+        ];
+        this.filtrarTramites();
+    }
+
+    filtrarTramites() {
+        const q = (document.getElementById('tramites-buscador')?.value || '').toLowerCase();
+        const lista = document.getElementById('tramites-lista');
+        if (!lista || !this.tramitesData) return;
+
+        const filtrados = q ? this.tramitesData.filter(t =>
+            t.titulo.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.cat.toLowerCase().includes(q)
+        ) : [];
+
+        if (!q) { lista.innerHTML = ''; return; }
+
+        if (filtrados.length === 0) {
+            lista.innerHTML = `<div class="card" style="text-align:center;padding:20px;color:var(--gray-600);">No encontramos ese trámite. Probá consultarlo al bot de abajo 👇</div>`;
+            return;
+        }
+
+        lista.innerHTML = filtrados.map(t => `
+            <div class="tramites-item card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <span class="tramites-cat-badge">${t.cat}</span>
+                        <h3 style="margin:6px 0 4px;font-size:0.95rem;">${t.titulo}</h3>
+                        <p style="margin:0 0 6px;font-size:0.82rem;color:var(--gray-600);">${t.desc}</p>
+                    </div>
+                    <span style="font-size:0.7rem;color:var(--gray-600);white-space:nowrap;margin-left:8px;"><i class="fa-solid fa-clock"></i> ${t.tiempo}</span>
+                </div>
+                <div style="background:var(--bg);border-radius:8px;padding:8px;margin-bottom:8px;font-size:0.78rem;">
+                    <b>Pasos:</b> ${t.pasos}
+                </div>
+                <a href="${t.link}" target="_blank" rel="noopener" style="font-size:0.8rem;color:var(--primary);text-decoration:none;font-weight:700;">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Sitio oficial
+                </a>
+            </div>`).join('');
+    }
+
+    seleccionarTramiteCat(cat) {
+        const input = document.getElementById('tramites-buscador');
+        if (input) { input.value = cat; this.filtrarTramites(); }
+        document.querySelectorAll('.tramites-cat-card').forEach(el => el.classList.remove('selected'));
+        event?.target?.closest('.tramites-cat-card')?.classList.add('selected');
+    }
+
+    enviarMensajeBot() {
+        const input = document.getElementById('bot-input');
+        const msgBox = document.getElementById('bot-messages');
+        if (!input || !msgBox || !input.value.trim()) return;
+
+        const userText = input.value.trim();
+        input.value = '';
+
+        // Agregar mensaje del usuario
+        msgBox.innerHTML += `<div class="bot-msg bot-msg-user">${userText}</div>`;
+
+        // Indicador de escritura
+        const typingId = 'bot-typing-' + Date.now();
+        msgBox.innerHTML += `<div class="bot-msg bot-msg-bot" id="${typingId}"><i>Escribiendo...</i></div>`;
+        msgBox.scrollTop = msgBox.scrollHeight;
+
+        setTimeout(() => {
+            const typing = document.getElementById(typingId);
+            if (typing) typing.remove();
+            const respuesta = this.tramitesBotResponder(userText.toLowerCase());
+            msgBox.innerHTML += `<div class="bot-msg bot-msg-bot">${respuesta}</div>`;
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }, 900);
+    }
+
+    tramitesBotResponder(q) {
+        const respuestas = [
+            { keys: ['licencia', 'carnet', 'conducir', 'manejar'], resp: '🚗 Para la <b>licencia de conducir</b>, tenés que sacar turno en la web de tránsito de La Rioja (<a href="https://www.larioja.gob.ar/transito" target="_blank" style="color:var(--primary)">www.larioja.gob.ar/transito</a>), aprobar el examen médico y teórico, y pagar la tasa correspondiente. El trámite demora entre 5 y 10 días.' },
+            { keys: ['dni', 'documento', 'identidad', 'renaper'], resp: '🪪 Para renovar el <b>DNI</b>, debés sacar turno en RENAPER o en la Oficina del Registro Civil local. Llevá tu partida de nacimiento y DNI anterior. Se entrega en el domicilio en aproximadamente 15-30 días.' },
+            { keys: ['impuesto', 'automotor', 'patente', 'arior'], resp: '💰 El <b>impuesto automotor</b> se paga en <a href="https://www.arior.larioja.gob.ar" target="_blank" style="color:var(--primary)">ARIOR online</a> o en cualquier sucursal habilitada. Solo necesitás el número de dominio o patente.' },
+            { keys: ['turno', 'médico', 'salud', 'ipross', 'hospital'], resp: '🏥 Para sacar <b>turno médico</b> en IPROSS, podés llamar al 0800-888-4767, usar la app oficial de IPROSS o ingresar a <a href="https://www.ipross.gob.ar" target="_blank" style="color:var(--primary)">www.ipross.gob.ar</a>. Para el Hospital, acercate al CAPS de tu barrio.' },
+            { keys: ['inscripción', 'escuela', 'colegio', 'educación', 'hijo'], resp: '🎒 La <b>inscripción escolar</b> se realiza por la plataforma digital del Ministerio de Educación de La Rioja (<a href="https://educacion.larioja.gob.ar" target="_blank" style="color:var(--primary)">educacion.larioja.gob.ar</a>). Necesitás DNI del titular y del menor, y la libreta del año anterior.' },
+            { keys: ['habilitación', 'comercio', 'local', 'negocio'], resp: '🏪 Para la <b>habilitación comercial</b>, debés presentarte en la Municipalidad Capital con los planos aprobados, certificado de Bomberos y completar el formulario de habilitación. El trámite puede demorar entre 30 y 60 días.' },
+            { keys: ['vacuna', 'vacunación', 'gripe', 'covid'], resp: '💉 Las <b>vacunas gratuitas</b> se aplican en los CAPS de cada barrio sin necesidad de turno previo. Llevá tu DNI y libreta sanitaria. Para más info: <a href="https://salud.larioja.gob.ar" target="_blank" style="color:var(--primary)">salud.larioja.gob.ar</a>' },
+            { keys: ['título', 'secundario', 'diploma', 'copia'], resp: '📄 Para obtener una copia de tu <b>título secundario</b>, dirigite a la Dirección General de Escuelas (DGED) con tu DNI y completá el formulario de solicitud. El trámite demora entre 10 y 15 días hábiles.' },
+            { keys: ['partida', 'nacimiento', 'registro civil'], resp: '📋 La <b>partida de nacimiento</b> se tramita en el Registro Civil Provincial. Llevá tu DNI, abonás el arancel y la obtenés en 3-5 días. También podés solicitarla online en el sitio del Gobierno de La Rioja.' },
+            { keys: ['obra', 'construir', 'permiso', 'refacción', 'planos'], resp: '🏗️ El <b>permiso de construcción</b> se gestiona en la Municipalidad. Necesitás planos firmados por un profesional matriculado, pagar la tasa municipal y esperar la aprobación, que demora aproximadamente 30 días.' },
+            { keys: ['hola', 'buenas', 'buen día', 'buenas tardes', 'saludos'], resp: '👋 ¡Hola! ¿En qué trámite te puedo ayudar hoy? Puedo orientarte sobre licencias, documentos, impuestos, salud, educación y más trámites del Gobierno de La Rioja.' },
+            { keys: ['gracias', 'muchas gracias', 'ok', 'perfecto', 'genial'], resp: '¡De nada! Estoy acá para ayudarte. Si tenés otra consulta, no dudes en escribir. 🙌' },
+        ];
+
+        for (const item of respuestas) {
+            if (item.keys.some(k => q.includes(k))) return item.resp;
+        }
+
+        return `No encontré información exacta sobre <b>"${q}"</b>. Te recomiendo visitar el portal oficial: <a href="https://www.larioja.gob.ar" target="_blank" style="color:var(--primary)">www.larioja.gob.ar</a> o llamar al Centro de Atención al Ciudadano <b>0800-333-5746</b>. ¿Puedo ayudarte con otro trámite?`;
     }
 }
 

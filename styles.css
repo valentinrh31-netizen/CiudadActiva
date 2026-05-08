@@ -2225,5 +2225,254 @@ body.mobile-mode ::-webkit-scrollbar-thumb { background: var(--border); border-r
 
 /* ─── FOOTER PADDING PARA NO TAPAR FAB ─── */
 body.mobile-mode .main-content > .view-container.active:last-child {
+    padding-bottom: 100px;
+}
+
+/* ─── MIS REPORTES: TIMELINE Y CARDS ─── */
+.misrep-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.misrep-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+}
+
+.misrep-stat-num {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.misrep-card {
+    padding: 16px;
+    transition: transform 0.2s;
+}
+
+.misrep-card:hover { transform: translateY(-3px); }
+
+.report-timeline {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+    position: relative;
+    padding-top: 10px;
+}
+
+.report-timeline::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #e2e8f0;
+    z-index: 1;
+}
+
+.timeline-step {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 25%;
+}
+
+.timeline-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    border: 3px solid white;
+    margin-bottom: 8px;
+    transition: all 0.3s;
+}
+
+.timeline-step span {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.timeline-step.done .timeline-dot { background: var(--primary); }
+.timeline-step.done span { color: var(--gray-800); }
+.timeline-step.current .timeline-dot {
+    background: var(--primary);
+    box-shadow: 0 0 0 4px rgba(230, 25, 43, 0.2);
+    transform: scale(1.2);
+}
+
+/* ─── GUÍA DE TRÁMITES ─── */
+.tramites-search-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.tramites-search-box:focus-within { border-color: var(--primary); }
+
+.tramites-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.tramites-cat-card {
+    background: white;
+    padding: 16px 10px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    border: 1px solid #f1f5f9;
+    transition: all 0.2s;
+}
+
+.tramites-cat-card i { font-size: 1.5rem; }
+.tramites-cat-card span { font-size: 0.75rem; font-weight: 700; color: var(--gray-600); }
+.tramites-cat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.tramites-cat-card.selected { border-color: var(--primary); background: #fff1f2; }
+
+.tramites-item {
+    padding: 16px;
+    border-left: 4px solid var(--primary);
+}
+
+.tramites-cat-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--primary);
+    background: #fff1f2;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+/* ─── BOT DE TRÁMITES ─── */
+.tramites-bot-card {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    height: 400px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.tramites-bot-header {
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bot-avatar {
+    width: 36px;
+    height: 36px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.bot-online-badge {
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: #057642;
+    background: #ecfdf5;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.tramites-bot-messages {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #fff;
+}
+
+.bot-msg {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.bot-msg-bot {
+    align-self: flex-start;
+    background: #f1f5f9;
+    color: var(--gray-800);
+    border-bottom-left-radius: 2px;
+}
+
+.bot-msg-user {
+    align-self: flex-end;
+    background: var(--primary);
+    color: white;
+    border-bottom-right-radius: 2px;
+}
+
+.tramites-bot-input {
+    padding: 12px;
+    display: flex;
+    gap: 8px;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+}
+
+.tramites-bot-input input {
+    flex: 1;
+    border: 1px solid #e2e8f0;
+    padding: 8px 14px;
+    border-radius: 20px;
+    outline: none;
+    font-size: 0.9rem;
+}
+
+.bot-send-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.bot-send-btn:hover { transform: scale(1.1); }
+
+/* Adaptaciones Mobile */
+body.mobile-mode .misrep-stats-grid { grid-template-columns: 1fr; gap: 8px; }
+body.mobile-mode .tramites-grid { grid-template-columns: repeat(2, 1fr); }
+body.mobile-mode .tramites-bot-card { height: 450px; }
+body.mobile-mode .timeline-step span { font-size: 0.55rem; }
     padding-bottom: 90px;
 }

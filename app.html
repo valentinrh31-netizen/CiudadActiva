@@ -473,6 +473,120 @@
                     </div>
                 </div>
             </div>
+            <!-- ===== VISTA MIS REPORTES ===== -->
+            <div id="misreportesView" class="view-container">
+                <div class="view-header">
+                    <h1>Mis Reportes</h1>
+                    <p>Seguimiento personal de tus reportes ciudadanos</p>
+                </div>
+
+                <!-- Resumen estadístico -->
+                <div class="misrep-stats-grid">
+                    <div class="card misrep-stat-card">
+                        <i class="fa-solid fa-paper-plane" style="color:var(--primary);font-size:1.5rem;"></i>
+                        <div>
+                            <span id="misrep-total" class="misrep-stat-num">0</span>
+                            <small>Enviados</small>
+                        </div>
+                    </div>
+                    <div class="card misrep-stat-card">
+                        <i class="fa-solid fa-circle-check" style="color:var(--success);font-size:1.5rem;"></i>
+                        <div>
+                            <span id="misrep-resueltos" class="misrep-stat-num">0</span>
+                            <small>Resueltos</small>
+                        </div>
+                    </div>
+                    <div class="card misrep-stat-card">
+                        <i class="fa-solid fa-clock" style="color:var(--warning);font-size:1.5rem;"></i>
+                        <div>
+                            <span id="misrep-pendientes" class="misrep-stat-num">0</span>
+                            <small>Pendientes</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de reportes del usuario -->
+                <div id="misreportes-lista" style="margin-top:16px; display:flex; flex-direction:column; gap:16px;"></div>
+            </div>
+
+            <!-- ===== VISTA GUÍA DE TRÁMITES ===== -->
+            <div id="tramitesView" class="view-container">
+                <div class="view-header">
+                    <h1>Guía de Trámites</h1>
+                    <p>Consultá cualquier trámite del Gobierno de La Rioja</p>
+                </div>
+
+                <!-- Buscador -->
+                <div class="tramites-search-box card">
+                    <i class="fa-solid fa-magnifying-glass" style="color:var(--gray-600);font-size:1.1rem;"></i>
+                    <input type="text" id="tramites-buscador" placeholder="Buscá un trámite: licencia, habilitación, turno médico..." oninput="app.filtrarTramites()" style="border:none;outline:none;flex:1;font-size:1rem;background:transparent;">
+                </div>
+
+                <!-- Categorías -->
+                <div class="tramites-grid" id="tramites-categorias">
+                    <div class="tramites-cat-card" onclick="app.seleccionarTramiteCat('Documentos')">
+                        <i class="fa-solid fa-id-card" style="color:#0a66c2;"></i>
+                        <span>Documentos</span>
+                    </div>
+                    <div class="tramites-cat-card" onclick="app.seleccionarTramiteCat('Licencias')">
+                        <i class="fa-solid fa-car" style="color:#16a34a;"></i>
+                        <span>Licencias</span>
+                    </div>
+                    <div class="tramites-cat-card" onclick="app.seleccionarTramiteCat('Impuestos')">
+                        <i class="fa-solid fa-coins" style="color:#ca8a04;"></i>
+                        <span>Impuestos</span>
+                    </div>
+                    <div class="tramites-cat-card" onclick="app.seleccionarTramiteCat('Salud')">
+                        <i class="fa-solid fa-heart-pulse" style="color:#dc2626;"></i>
+                        <span>Salud</span>
+                    </div>
+                    <div class="tramites-cat-card" onclick="app.seleccionarTramiteCat('Educación')">
+                        <i class="fa-solid fa-graduation-cap" style="color:#7c3aed;"></i>
+                        <span>Educación</span>
+                    </div>
+                    <div class="tramites-cat-card" onclick="app.seleccionarTramiteCat('Habilitaciones')">
+                        <i class="fa-solid fa-store" style="color:#0891b2;"></i>
+                        <span>Habilitaciones</span>
+                    </div>
+                    <div class="tramites-cat-card" onclick="app.seleccionarTramiteCat('Social')">
+                        <i class="fa-solid fa-hand-holding-heart" style="color:#e11d48;"></i>
+                        <span>Social</span>
+                    </div>
+                    <div class="tramites-cat-card" onclick="app.seleccionarTramiteCat('Otros')">
+                        <i class="fa-solid fa-ellipsis" style="color:#64748b;"></i>
+                        <span>Otros</span>
+                    </div>
+                </div>
+
+                <!-- Lista de trámites filtrada -->
+                <div id="tramites-lista" style="margin-top:16px; display:flex; flex-direction:column; gap:10px;"></div>
+
+                <!-- Bot de IA -->
+                <div class="tramites-bot-card card">
+                    <div class="tramites-bot-header">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div class="bot-avatar"><i class="fa-solid fa-robot"></i></div>
+                            <div>
+                                <b>Asistente Virtual</b>
+                                <small style="display:block;color:var(--gray-600);">Gobierno de La Rioja</small>
+                            </div>
+                        </div>
+                        <span class="bot-online-badge">EN LÍNEA</span>
+                    </div>
+                    <div class="tramites-bot-messages" id="bot-messages">
+                        <div class="bot-msg bot-msg-bot">
+                            ¡Hola! Soy el asistente del Gobierno de La Rioja. Preguntame sobre cualquier trámite: documentos, licencias, habilitaciones, turnos médicos... ¿En qué te ayudo hoy?
+                        </div>
+                    </div>
+                    <div class="tramites-bot-input">
+                        <input type="text" id="bot-input" placeholder="Escribí tu consulta..." onkeydown="if(event.key==='Enter') app.enviarMensajeBot()">
+                        <button onclick="app.enviarMensajeBot()" class="bot-send-btn">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
