@@ -88,17 +88,33 @@
                     <h1>Mapa Territorial</h1>
                     <p>Monitoreo en tiempo real de los reportes ciudadanos</p>
                 </div>
-                <div id="map" class="map-box"></div>
+                <div id="map" class="map-box" style="position:relative;">
+                    <!-- Botón Flotante Mapa de Calor -->
+                    <button onclick="app.toggleHeatmap()" class="heatmap-btn" title="Mapa de Calor">
+                        <i class="fa-solid fa-fire"></i> <span>Mapa de Calor</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Vista Gestión -->
             <div id="reportesView" class="view-container">
-                <div class="view-header">
-                    <h1>Bandeja de Entrada</h1>
-                    <p>Procesa y resuelve los reportes pendientes</p>
+                <div class="view-header" style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:15px;">
+                    <div>
+                        <h1>Bandeja de Entrada</h1>
+                        <p>Procesa y resuelve los reportes pendientes</p>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <select id="admin-sort" onchange="app.renderAdminList()" class="input-mini" style="width:auto; padding:5px 15px; border-radius:8px;">
+                            <option value="fecha">Recientes primero</option>
+                            <option value="votos">Más urgentes (Votos)</option>
+                        </select>
+                        <button onclick="app.exportarReportes()" class="btn-secondary" style="width:auto; padding:8px 15px; font-size:0.85rem;">
+                            <i class="fa-solid fa-file-export"></i> Exportar
+                        </button>
+                    </div>
                 </div>
-                <div id="lista" class="admin-reports-grid">
-                    <!-- Dinámico -->
+                <div id="lista-admin" class="admin-reports-grid">
+                    <!-- Dinámico (Asegurarse de usar lista-admin para el render) -->
                 </div>
             </div>
 
@@ -289,6 +305,41 @@
                 </div>
                 
                 <button type="submit" class="btn-primary" style="margin-top:20px;">Actualizar Obra</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Resolución de Reporte (NUEVO) -->
+    <div id="modalResolucion" class="obra-modal">
+        <div class="obra-modal-content card" style="max-width:500px;">
+            <button class="close-btn" onclick="app.cerrarModalResolucion()"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="margin-bottom: 15px; color: var(--success);"><i class="fa-solid fa-certificate"></i> Finalizar Reporte</h2>
+            <p style="margin-bottom:20px; font-size:0.9rem; color:var(--gray-600);">Documentá la resolución para el ciudadano. Esto genera confianza y transparencia.</p>
+            
+            <form id="form-resolucion" onsubmit="app.guardarResolucion(event)">
+                <input type="hidden" id="res-report-id">
+                
+                <div class="input-group">
+                    <label>📸 Foto del Trabajo Finalizado</label>
+                    <div class="photo-upload-box" onclick="document.getElementById('res-photo').click()">
+                        <img id="res-photo-preview" src="" alt="" style="display:none; width:100%; height:160px; object-fit:cover; border-radius:8px;">
+                        <div id="res-photo-placeholder">
+                            <i class="fa-solid fa-camera" style="font-size:2rem; color:var(--gray-600);"></i>
+                            <p style="margin:8px 0 0; color:var(--gray-600); font-size:0.85rem;">Toca para subir evidencia</p>
+                        </div>
+                    </div>
+                    <input type="file" id="res-photo" accept="image/*" style="display:none;" onchange="app.previewResPhoto(this)">
+                </div>
+
+                <div class="input-group">
+                    <label>Respuesta Oficial al Vecino</label>
+                    <textarea id="res-comentario" rows="3" placeholder="Ej: Se procedió al bacheo y nivelación de la calzada. Cuadrilla N°4." required></textarea>
+                </div>
+                
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button type="button" onclick="app.cerrarModalResolucion()" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="background:var(--success);">Confirmar y Notificar</button>
+                </div>
             </form>
         </div>
     </div>

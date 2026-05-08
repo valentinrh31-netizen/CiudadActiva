@@ -659,39 +659,89 @@ class CiudadActivaApp {
     }
     renderAdminList() {
         const lista = document.getElementById('lista-admin');
-        if (!lista) return;
+        const mobileLista = document.getElementById('mobile-lista-admin');
+        if (!lista && !mobileLista) return;
         
+        const sortType = document.getElementById('admin-sort')?.value || 'fecha';
+        let sortedReports = [...this.reports];
+        
+        if (sortType === 'votos') {
+            sortedReports.sort((a, b) => (b.votos || 0) - (a.votos || 0));
+        } else {
+            sortedReports.reverse();
+        }
+
         let html = '';
-        [...this.reports].reverse().forEach(r => {
+        sortedReports.forEach(r => {
             const statusCol = this.getCol(r);
+            const sugerencia = this.sugerirArea(r.desc);
+            
             html += `
-                <div class="card mini-card" style="border-left: 4px solid ${statusCol}; margin-bottom:15px; padding:15px;">
-                    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
+                <div class="card admin-card" style="border-left: 5px solid ${statusCol};">
+                    <div class="admin-card-header">
                         <div>
                             <b style="font-size:1.1rem;">${r.cat}</b> <br>
-                            <span class="badge" style="background:${statusCol}; color:white;">${r.estado}</span>
+                            <span class="badge" style="background:${statusCol}; color:white; font-size:0.7rem; padding:2px 8px; border-radius:10px;">${r.estado}</span>
+                            <small style="color:var(--gray-600); margin-left:8px;"><i class="fa-solid fa-thumbs-up"></i> ${r.votos || 0} votos</small>
                         </div>
-                        <button onclick="app.verEnMapa(${r.id})" class="btn-chat-send" style="width:30px; height:30px;"><i class="fa-solid fa-location-dot"></i></button>
+                        <div style="display:flex; gap:8px;">
+                            <button onclick="app.verEnMapa(${r.id})" class="btn-icon-circle" title="Ver en mapa"><i class="fa-solid fa-location-dot"></i></button>
+                            <button onclick="app.toggleChat(${r.id})" class="btn-icon-circle" title="Chat"><i class="fa-solid fa-comments"></i></button>
+                        </div>
                     </div>
-                    <p style="font-size:0.9rem; margin-bottom:10px;">${r.desc}</p>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <select onchange="app.cambiarEstado(${r.id}, this.value)" style="flex:1; font-size:0.8rem; padding:5px;">
-                            <option ${r.estado === 'Recibido' ? 'selected' : ''}>Recibido</option>
-                            <option ${r.estado === 'En proceso' ? 'selected' : ''}>En proceso</option>
-                            <option ${r.estado === 'En revisión' ? 'selected' : ''}>En revisión</option>
-                            <option ${r.estado === 'Solucionado' ? 'selected' : ''}>Solucionado</option>
-                        </select>
-                        <select onchange="app.cambiarArea(${r.id}, this.value)" style="flex:1; font-size:0.8rem; padding:5px;">
-                            <option value="">Asignar Área</option>
-                            <option value="Vialidad" ${r.area === 'Vialidad' ? 'selected' : ''}>Vialidad</option>
-                            <option value="Iluminación" ${r.area === 'Iluminación' ? 'selected' : ''}>Iluminación</option>
-                            <option value="Higiene Urbana" ${r.area === 'Higiene Urbana' ? 'selected' : ''}>Higiene Urbana</option>
-                        </select>
+
+                    <p style="font-size:0.95rem; margin:12px 0; color:var(--gray-800);">${r.desc}</p>
+                    
+                    ${r.photo ? `<img src="${r.photo}" style="width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:12px;">` : ''}
+
+                    <div class="admin-controls-grid">
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--gray-600);">Estado</label>
+                            <select onchange="app.cambiarEstado(${r.id}, this.value)" style="width:100%; padding:8px; border-radius:8px; font-size:0.85rem;">
+                                <option value="Recibido" ${r.estado === 'Recibido' ? 'selected' : ''}>Recibido</option>
+                                <option value="En proceso" ${r.estado === 'En proceso' ? 'selected' : ''}>En proceso</option>
+                                <option value="En revisión" ${r.estado === 'En revisión' ? 'selected' : ''}>En revisión</option>
+                                <option value="Solucionado" ${r.estado === 'Solucionado' ? 'selected' : ''}>Solucionado</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--gray-600);">Área Asignada ${sugerencia ? `<span class="ia-suggestion" title="Sugerencia IA"><i class="fa-solid fa-robot"></i> ${sugerencia}</span>` : ''}</label>
+                            <select onchange="app.cambiarArea(${r.id}, this.value)" style="width:100%; padding:8px; border-radius:8px; font-size:0.85rem;">
+                                <option value="">Asignar Área</option>
+                                <option value="Vialidad" ${r.area === 'Vialidad' ? 'selected' : ''}>Vialidad</option>
+                                <option value="Iluminación" ${r.area === 'Iluminación' ? 'selected' : ''}>Iluminación</option>
+                                <option value="Higiene Urbana" ${r.area === 'Higiene Urbana' ? 'selected' : ''}>Higiene Urbana</option>
+                                <option value="Seguridad" ${r.area === 'Seguridad' ? 'selected' : ''}>Seguridad</option>
+                                <option value="Obras" ${r.area === 'Obras' ? 'selected' : ''}>Obras</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="quick-responses">
+                        <small style="display:block; width:100%; margin-bottom:5px; font-weight:700; color:var(--gray-600); font-size:0.7rem;">RESPUESTAS RÁPIDAS:</small>
+                        <button onclick="app.enviarRespuestaRapida(${r.id}, 'Cuadrilla asignada para inspección.')">Inspección</button>
+                        <button onclick="app.enviarRespuestaRapida(${r.id}, 'Repuesto solicitado al almacén central.')">Repuesto</button>
+                        <button onclick="app.enviarRespuestaRapida(${r.id}, 'Estamos trabajando para solucionarlo lo antes posible.')">Trabajando</button>
+                    </div>
+
+                    <div class="chat-container" id="chat-container-${r.id}" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+                        <div class="chat-box" id="chat-box-${r.id}" style="max-height:150px; overflow-y:auto; margin-bottom:10px;">
+                            ${(r.mensajes || []).map(m => `
+                                <div class="msg-bubble ${m.autor === 'funcionario' ? 'msg-admin' : 'msg-user'}">
+                                    ${m.texto} <br> <small style="opacity:0.7; font-size:0.6rem;">${m.fecha}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="chat-input-group">
+                            <input type="text" class="chat-input" id="chat-input-${r.id}" placeholder="Escribir al vecino...">
+                            <button class="btn-chat-send" onclick="app.enviarMensaje(${r.id}, 'funcionario')"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
                     </div>
                 </div>
             `;
         });
-        lista.innerHTML = html;
+        if (lista) lista.innerHTML = html;
+        if (mobileLista) mobileLista.innerHTML = html;
         this.renderStats();
     }
     verEnMapa(id) {
@@ -712,17 +762,150 @@ class CiudadActivaApp {
     }
 
     cambiarEstado(id, nuevo) {
+        if (nuevo === 'Solucionado') {
+            return this.abrirModalResolucion(id);
+        }
         const r = this.reports.find(x => x.id == id);
         if (r) {
             r.estado = nuevo; 
-            if (nuevo === 'Solucionado') {
-                r.fechaSolucion = Date.now();
-                this.showToast("🎉 ¡Reporte Solucionado! El ciudadano podrá dar su feedback.", "success");
-            }
             this.save();
             this.renderAdminList(); 
             this.renderMarkers();
+            this.showToast(`Estado actualizado a: ${nuevo}`, "success");
         }
+    }
+
+    abrirModalResolucion(id) {
+        document.getElementById('res-report-id').value = id;
+        document.getElementById('modalResolucion').classList.add('active');
+        document.getElementById('res-photo-preview').style.display = 'none';
+        document.getElementById('res-photo-placeholder').style.display = 'block';
+        document.getElementById('form-resolucion').reset();
+    }
+
+    cerrarModalResolucion() {
+        document.getElementById('modalResolucion').classList.remove('active');
+    }
+
+    previewResPhoto(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById('res-photo-preview');
+                const placeholder = document.getElementById('res-photo-placeholder');
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async guardarResolucion(event) {
+        event.preventDefault();
+        const id = document.getElementById('res-report-id').value;
+        const r = this.reports.find(x => x.id == id);
+        if (!r) return;
+
+        const photoInput = document.getElementById('res-photo');
+        let photoBase64 = null;
+        if (photoInput.files.length > 0) {
+            photoBase64 = await this.processImage(photoInput.files[0]);
+        }
+
+        r.estado = 'Solucionado';
+        r.fechaSolucion = Date.now();
+        r.respuestaOficial = document.getElementById('res-comentario').value;
+        r.photoResolucion = photoBase64;
+        
+        // Notificar al vecino (simulado)
+        let notifs = JSON.parse(localStorage.getItem('ca_notifications')) || [];
+        notifs.push({ user: r.name, msg: `¡Tu reporte de ${r.cat} ha sido SOLUCIONADO! 🎉 Mira la foto en Mis Reportes.` });
+        localStorage.setItem('ca_notifications', JSON.stringify(notifs));
+
+        this.save();
+        this.cerrarModalResolucion();
+        this.renderAdminList();
+        this.renderMarkers();
+        this.showToast("🎉 ¡Reporte finalizado y notificado!", "success");
+    }
+
+    sugerirArea(desc) {
+        const d = desc.toLowerCase();
+        if (d.includes('luz') || d.includes('foco') || d.includes('oscur')) return "Iluminación";
+        if (d.includes('bache') || d.includes('pozo') || d.includes('call') || d.includes('pavimento')) return "Vialidad";
+        if (d.includes('basura') || d.includes('limp') || d.includes('sucio') || d.includes('microbas')) return "Higiene Urbana";
+        if (d.includes('segur') || d.includes('robo') || d.includes('asalt') || d.includes('pelig')) return "Seguridad";
+        if (d.includes('arbol') || d.includes('plaza') || d.includes('parque')) return "Obras/Plazas";
+        return null;
+    }
+
+    enviarRespuestaRapida(id, texto) {
+        const r = this.reports.find(x => x.id == id);
+        if (!r) return;
+        if (!r.mensajes) r.mensajes = [];
+        r.mensajes.push({
+            autor: 'funcionario',
+            texto: texto,
+            fecha: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+        this.save();
+        this.renderAdminList();
+        this.showToast("Respuesta rápida enviada", "success");
+    }
+
+    exportarReportes() {
+        if (this.reports.length === 0) return this.showToast("No hay reportes para exportar", "error");
+        
+        let csv = "ID,Fecha,Categoria,Estado,Votos,Area,Descripcion\n";
+        this.reports.forEach(r => {
+            csv += `${r.id},${r.fecha},${r.cat},${r.estado},${r.votos || 0},${r.area || 'Sin asignar'},"${r.desc.replace(/"/g, '""')}"\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `reportes_ciudadactiva_${new Date().toLocaleDateString()}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.showToast("Exportando archivo CSV...", "success");
+    }
+
+    toggleHeatmap() {
+        if (this.heatLayer) {
+            this.map.removeLayer(this.heatLayer);
+            this.heatLayer = null;
+            this.showToast("Mapa de Calor desactivado");
+            return;
+        }
+
+        const heatData = this.reports
+            .filter(r => r.estado !== 'Solucionado')
+            .map(r => [r.pos[0], r.pos[1], (r.votos || 0) + 1]);
+
+        if (heatData.length === 0) return this.showToast("No hay reportes activos para el mapa de calor", "info");
+
+        // Simulación de Heatmap usando círculos de Leaflet (para no depender de librerías externas pesadas si no están)
+        // Aunque el usuario tiene Leaflet, a veces no tiene el plugin Heatmap.
+        // Lo haré con círculos de intensidad si no puedo cargar la lib, pero simularé el efecto.
+        this.heatLayer = L.layerGroup().addTo(this.map);
+        
+        heatData.forEach(p => {
+            const radius = 100 + (p[2] * 20);
+            const opacity = 0.2 + (p[2] * 0.05);
+            L.circle([p[0], p[1]], {
+                radius: radius,
+                fillColor: '#e6192b',
+                fillOpacity: opacity > 0.6 ? 0.6 : opacity,
+                color: 'transparent',
+                stroke: false
+            }).addTo(this.heatLayer);
+        });
+
+        this.showToast("Mapa de Calor activado (Densidad por Votos)");
     }
     cambiarArea(id, nueva) {
         const r = this.reports.find(x => x.id == id);

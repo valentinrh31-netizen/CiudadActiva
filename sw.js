@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ciudad-activa-v7';
+const CACHE_NAME = 'ciudad-activa-v8';
 const ASSETS = [
   './',
   './index.html',
