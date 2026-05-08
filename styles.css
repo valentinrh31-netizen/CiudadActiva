@@ -2022,9 +2022,9 @@ body.mobile-mode .sos-fab { display: none !important; }
 
 /* ─── MAPA EN MOBILE ─── */
 body.mobile-mode .map-box {
-    height: 72vw;
-    min-height: 260px;
-    max-height: 400px;
+    height: 85vw;
+    min-height: 300px;
+    max-height: 480px;
     border-radius: 16px;
     overflow: hidden;
 }
@@ -2048,21 +2048,23 @@ body.mobile-mode .transporte-layout {
     gap: 14px;
 }
 
-body.mobile-mode .transporte-map-container {
-    height: 260px !important;
-    min-height: 260px;
-    border-radius: 16px;
-    overflow: hidden;
-}
-
-body.mobile-mode #transporte-map {
-    height: 260px !important;
-}
-
 body.mobile-mode .transporte-sidebar {
     width: 100% !important;
     max-height: none;
     overflow-y: visible;
+    order: 1;
+}
+
+body.mobile-mode .transporte-map-container {
+    height: 280px !important;
+    min-height: 280px;
+    border-radius: 16px;
+    overflow: hidden;
+    order: 2;
+}
+
+body.mobile-mode #transporte-map {
+    height: 280px !important;
 }
 
 /* ─── OBRAS: VERTICAL EN MOBILE ─── */
